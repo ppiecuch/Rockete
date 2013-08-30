@@ -1,5 +1,5 @@
 TEMPLATE = app
-TARGET = rockete
+TARGET = Rockete
 DESTDIR = ./debug
 QT += gui core opengl xml
 CONFIG += debug_and_release console qtestlib
@@ -129,14 +129,33 @@ win32 {
         }
     }
 }
-unix {
+unix:!macx {
 
     exists( $(LIBROCKET)/Build/libRocketFreeType.a ) {
         LIBS +=  -lRocketFreeType -lfreetype 
         DEFINES += ROCKET_FREETYPE
     }
     
-    LIBS += -L$(LIBROCKET)/Build -lRocketCore -lRocketControls -lGLU 
+    LIBS += -L$(LIBROCKET)/Build -lRocketCore -lRocketControls -lGLU
+    
+}
+macx {
+
+    exists( $(LIBROCKET)/Build/libRocketFreeType.a ) {
+        LIBS += -lRocketFreeType -lfreetype 
+        DEFINES += ROCKET_FREETYPE
+    }
+    exists( /opt/local/lib/libfreetype.a ) {
+        LIBS += /opt/local/lib/libfreetype.a
+    }
+    exists( /opt/local/lib/libbz2.a ) {
+        LIBS += /opt/local/lib/libbz2.a
+    }
+    exists( /opt/local/lib/libz.a ) {
+        LIBS += /opt/local/lib/libz.a
+    }
+    
+    LIBS += -L$(LIBROCKET)/Build -lRocketCore -lRocketControls
     
 }
 

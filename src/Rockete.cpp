@@ -47,6 +47,10 @@ struct LocalScreenSizeItem
 Rockete::Rockete(QWidget *parent, Qt::WFlags flags)
     : QMainWindow(parent, flags), isReloadingFile(false)
 {
+#ifdef Q_WS_MACX
+    setAttribute(Qt::WA_MacSmallSize);
+#endif
+
     loadPlugins();
 
     instance = this;

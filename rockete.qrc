@@ -21,5 +21,6 @@
         <file>images/icon_lua.png</file>
         <file>images/icon_rcss.png</file>
         <file>images/icon_rml.png</file>
+        <file>images/tool_test.png</file>
     </qresource>
 </RCC>
