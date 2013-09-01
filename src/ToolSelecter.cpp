@@ -12,7 +12,7 @@ ToolSelecter::ToolSelecter()
     name = "Selecter";
     imageName = ":/images/tool_select.png";
     layout = new QGridLayout();
-    layout->addWidget(new QLabel("Selecter"));
+    layout->addWidget(new QLabel("<center><img src=':/images/tool_select.png'><br/>Tool: <b>Selecter</b></center>"));
     widget = new QWidget();
     widget->setLayout(layout);
 }

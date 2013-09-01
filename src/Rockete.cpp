@@ -1,5 +1,6 @@
 #include "Rockete.h"
 
+#include <QTime>
 #include <QFileDialog>
 #include <QTextEdit>
 #include <QFileInfo>
@@ -23,6 +24,8 @@
 #include "LocalizationManagerInterface.h"
 #include "OpenedLuaScript.h"
 
+void logMessageOutput( QtMsgType type, const char *msg );
+
 struct LocalScreenSizeItem
 {
     LocalScreenSizeItem(const int _width, const int _height, const char *text=NULL)
@@ -44,12 +47,51 @@ struct LocalScreenSizeItem
     int height;
 };
 
+// new global log/message handler:
+void logMessageOutput( QtMsgType type, const char *msg )
+{
+        QString sMsg = msg;
+        if(sMsg.isEmpty()) return;
+        if(sMsg.length() >= 8195) sMsg.truncate(8195);
+
+        Rockete *mw = Rockete::instance;
+
+#if defined(Q_CC_MSVC) || defined(Q_CC_MSVC_NET)
+        OutputDebugString( (sMsg + "\n"). ucs2() );
+#endif
+
+        switch ( type )
+        {
+        case QtDebugMsg:
+                fprintf( stderr, "%s Debug: %s \n", QTime::currentTime().toString().toAscii().data(), msg );
+                sMsg = "<blue>"+sMsg+"</blue>";
+                mw->logMessage(""+sMsg);
+                break;
+        case QtCriticalMsg:
+                fprintf( stderr, "%s Critical: %s \n", QTime::currentTime().toString().toAscii().data(), msg );
+                sMsg = "<red><b>"+sMsg+"</></red>";
+                mw->logMessage("<b>Critical:</b>"+sMsg);
+                break;
+        case QtWarningMsg:
+                fprintf( stderr, "%s Warning: %s \n", QTime::currentTime().toString().toAscii().data(), msg );
+                sMsg = "<red>"+sMsg+"</red>";
+                mw->logMessage("<b>Warning:</b>"+sMsg);
+                break;
+        case QtFatalMsg:
+                fprintf( stderr, "%s Fatal: %s \n", QTime::currentTime().toString().toAscii().data(), msg );
+                mw->logMessage("Fatal:"+sMsg);
+                abort();
+        }
+}
+
+
 Rockete::Rockete(QWidget *parent, Qt::WFlags flags)
     : QMainWindow(parent, flags), isReloadingFile(false)
 {
 #ifdef Q_WS_MACX
     setAttribute(Qt::WA_MacSmallSize);
 #endif
+    qInstallMsgHandler( logMessageOutput );
 
     loadPlugins();
 
@@ -1094,7 +1136,7 @@ int Rockete::openFile(const QString &filePath)
 
                 if(!file_info.exists())
                 {
-                    printf("file not found: %s\n", file_info.absoluteFilePath().toAscii().data());
+                    qWarning("file not found: %s\n", file_info.absoluteFilePath().toAscii().data());
                     return -1;
                 }
             }
@@ -1140,7 +1182,7 @@ int Rockete::openFile(const QString &filePath)
     {
         ui.codeTabWidget->setCurrentIndex(new_tab_index);
         ui.codeTabWidget->setTabToolTip(new_tab_index, file_info.absoluteFilePath());
-        printf("adding path: %s\n", file_info.filePath().toAscii().data());
+        qInfo("adding path: %s\n", file_info.filePath().toAscii().data());
         fileWatcher->addPath(file_info.filePath());
         Settings::setMostRecentFile(file_info.filePath());
         generateMenuRecent();
@@ -1370,7 +1412,7 @@ void Rockete::closeTab(int index, bool must_save)
 
     if(must_save)
         file->save();
-    printf("removing path: %s\n", file->fileInfo.filePath().toAscii().data());
+    qInfo("removing path: %s\n", file->fileInfo.filePath().toAscii().data());
     fileWatcher->removePath(file->fileInfo.filePath());
 
     if(doc)
@@ -1384,6 +1426,12 @@ void Rockete::closeTab(int index, bool must_save)
         RocketHelper::unloadDocument(doc->rocketDocument);
     }
     delete(removed_widget);
+}
+
+void Rockete::logMessage(QString aMsg)
+{
+        if(ui.logWindow!=NULL && !aMsg.isEmpty())
+                ui.logWindow->append(aMsg);
 }
 
 Rockete *Rockete::instance = NULL;

@@ -13,6 +13,7 @@
 #include "PropertyTreeModel.h"
 #include "DocumentHierarchyEventFilter.h"
 
+
 class Rockete : public QMainWindow
 {
     Q_OBJECT
@@ -41,6 +42,8 @@ public:
     int openFile(const QString &file_path);
     void checkTextChanged(int index);
     SnippetsManager *getSnippetsManager(){return ui.snippetsListWidget;}
+
+    void logMessage(QString aMsg);
 
 public slots:
     void menuOpenClicked();
@@ -101,7 +104,6 @@ private:
     AttributeTreeModel *attributeTreeModel;
     PropertyTreeModel *propertyTreeModel;
     QList<QAction*> recentFileActionList;
-    static Rockete *instance;
     QComboBox *searchBox;
     QComboBox *languageBox;
     QLabel *labelZoom;
@@ -111,6 +113,20 @@ private:
     WizardButton *wizard;
     QTreeWidgetItem *selectedTreeViewItem;
     DocumentHierarchyEventFilter *hierarchyEventFilter;
+
+public:
+    static Rockete *instance;
 };
+
+#define f_ssprintf(...)                                 \
+    ({ int _ss_size = snprintf(0, 0, ##__VA_ARGS__);    \
+    char *_ss_ret = (char*)alloca(_ss_size+1);          \
+    snprintf(_ss_ret, _ss_size+1, ##__VA_ARGS__);       \
+    _ss_ret; })
+
+#define qInfo(...) { const char *b = ({ int _ss_size = snprintf(0, 0, ##__VA_ARGS__);   \
+    char *_ss_ret = (char*)alloca(_ss_size+1);                                          \
+    snprintf(_ss_ret, _ss_size+1, ##__VA_ARGS__);                                       \
+    _ss_ret; }); Rockete::instance->logMessage(b); }
 
 #endif // ROCKETE_H

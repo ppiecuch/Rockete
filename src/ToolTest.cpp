@@ -17,8 +17,14 @@
 ToolTest::ToolTest()
 : Tool()
 {
+    QLayout *layout;
+
     name = "Test tool";
     imageName = ":/images/tool_test.png";
+    layout = new QGridLayout();
+    layout->addWidget(new QLabel("<center><img src=':/images/tool_test.png'><br/>Tool: <b>Test</b></center>"));
+    widget = new QWidget();
+    widget->setLayout(layout);
 }
 
 void ToolTest::onElementClicked(Element *_element)

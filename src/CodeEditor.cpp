@@ -553,7 +553,7 @@ void CodeEditor::keyPressEvent(QKeyEvent * e)
             nextLineStartIndex = lineStartIndex + lineList[i].size() + 1;
 
             if ((lineStartIndex >= currentPosition || (currentPosition >= lineStartIndex && currentPosition < nextLineStartIndex))) {
-                for( spaceCount = 0;lineList[i][spaceCount].isSpace(); spaceCount++ );
+                for( spaceCount = 0; lineList[i][spaceCount].isSpace(); spaceCount++ ) ;
                 textCursor().insertText("\n");
                 for( ;spaceCount>0; spaceCount-- ){
                     textCursor().insertText(" ");
