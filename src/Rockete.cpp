@@ -60,21 +60,22 @@ void logMessageOutput( QtMsgType type, const char *msg )
         OutputDebugString( (sMsg + "\n"). ucs2() );
 #endif
 
+        QTextDocument text; text.setPlainText(sMsg); sMsg = text.toHtml(); // make special chars printable in html
         switch ( type )
         {
         case QtDebugMsg:
                 fprintf( stderr, "%s Debug: %s \n", QTime::currentTime().toString().toAscii().data(), msg );
-                sMsg = "<font color=blue>"+QUrl::toPercentEncoding(sMsg)+"</font>";
+                sMsg = "<font color=blue>"+sMsg+"</font>";
                 mw->logMessage(""+sMsg);
                 break;
         case QtCriticalMsg:
                 fprintf( stderr, "%s Critical: %s \n", QTime::currentTime().toString().toAscii().data(), msg );
-                sMsg = "<font color=red><b>"+QUrl::toPercentEncoding(sMsg)+"</></font>";
+                sMsg = "<font color=red><b>"+sMsg+"</></font>";
                 mw->logMessage("<b>Critical:</b> "+sMsg);
                 break;
         case QtWarningMsg:
                 fprintf( stderr, "%s Warning: %s \n", QTime::currentTime().toString().toAscii().data(), msg );
-                sMsg = "<font color=red>"+QUrl::toPercentEncoding(sMsg)+"</font>";
+                sMsg = "<font color=red>"+sMsg+"</font>";
                 mw->logMessage("<b>Warning:</b> "+sMsg);
                 break;
         case QtFatalMsg:
