@@ -73,7 +73,7 @@ void ProjectManager::Initialize(const QString &filename)
         }
     } else {
 #ifdef Q_WS_MAC
-        fontPaths << (QString(bndlPathPtr) + "/font");
+        fontPaths << (QString(bndlPathPtr) + "/font/");
 #endif
     }
 
@@ -101,13 +101,13 @@ void ProjectManager::Initialize(const QString &filename)
         }
     } else {
 #ifdef Q_WS_MAC
-        texturePaths << (QString(bndlPathPtr) + "/textures");
+        texturePaths << (QString(bndlPathPtr) + "/textures/");
 #endif
     }
 
     node_list = domDocument.elementsByTagName("Interface");
 
-    for(int i = 0; i < node_list.count(); i++)
+    if (node_list.count()) for(int i = 0; i < node_list.count(); i++)
     {
         QDomNode node = node_list.at(i);
         if(node.firstChild().isText())
@@ -127,6 +127,10 @@ void ProjectManager::Initialize(const QString &filename)
                 interfacePaths.last().append("/");
             }
         }
+    } else {
+#ifdef Q_WS_MAC
+        interfacePaths << (QString(bndlPathPtr) + "/interface/");
+#endif
     }
 
     node_list = domDocument.elementsByTagName("WordList");
