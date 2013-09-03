@@ -28,20 +28,22 @@ void ProjectManager::Initialize(const QString &filename)
     texturePaths.clear();
     interfacePaths.clear();
 
-    if (!file.open(QIODevice::ReadOnly))
-        return;
-    if (!domDocument.setContent(file.readAll())) {
+    if (QFile::exists(filename)) {
+        if (!file.open(QIODevice::ReadOnly))
+            return;
+        if (!domDocument.setContent(file.readAll())) {
+            file.close();
+            return;
+        }
         file.close();
-        return;
     }
-    file.close();
 
     projectName = file_info.baseName();
 
 #ifdef Q_WS_MAC
     CFURLRef appUrlRef = CFBundleCopyBundleURL(CFBundleGetMainBundle());
     CFStringRef macPath = CFURLCopyFileSystemPath(appUrlRef, kCFURLPOSIXPathStyle);
-    const char *bndlPathPtr = CFStringGetCStringPtr(macPath, kCFStringEncodingUTF8)?:"";
+    const char *bndlPathPtr = CFStringGetCStringPtr(macPath, kCFStringEncodingUTF8)?:".";
     // char path[PATH_MAX]; CFStringGetFileSystemRepresentation(s, path, sizeof(path)); // TODO: check if this is needed.
 
     qDebug() << "Using mac bundle path: " << bndlPathPtr;
@@ -49,7 +51,7 @@ void ProjectManager::Initialize(const QString &filename)
 
     QDomNodeList node_list = domDocument.elementsByTagName("Font");
 
-    for(int i = 0; i < node_list.count(); i++)
+    if (node_list.count()) for(int i = 0; i < node_list.count(); i++)
     {
         QDomNode node = node_list.at(i);
         if(node.firstChild().isText())
@@ -69,6 +71,10 @@ void ProjectManager::Initialize(const QString &filename)
                 fontPaths.last().append("/");
             }
         }
+    } else {
+#ifdef Q_WS_MAC
+        fontPaths << (QString(bndlPathPtr) + "/font");
+#endif
     }
 
     node_list = domDocument.elementsByTagName("Texture");
@@ -95,7 +101,7 @@ void ProjectManager::Initialize(const QString &filename)
         }
     } else {
 #ifdef Q_WS_MAC
-        texturePaths << bndlPathPtr << "/textures";
+        texturePaths << (QString(bndlPathPtr) + "/textures");
 #endif
     }
 

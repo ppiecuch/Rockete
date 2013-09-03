@@ -376,7 +376,7 @@ void Rockete::menuOpenProjectClicked()
 {
     QString file_path = QFileDialog::getOpenFileName(this, tr("Open Rockete project..."), "", tr("libRocket project (*.rproj)"));
 
-    if (!file_path.isEmpty())
+    if (!file_path.isEmpty() && QFile::exists(file_path))
     {
         openProject(file_path);
     }

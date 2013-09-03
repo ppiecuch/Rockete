@@ -15,11 +15,6 @@ int main(int argc, char *argv[])
 
     QApplication a( argc, argv );
 
-    if(!RocketSystem::getInstance().initialize())
-    {
-        return -1;
-    }
-
 #ifdef Q_WS_MAC
     CFURLRef appUrlRef = CFBundleCopyBundleURL(CFBundleGetMainBundle());
     CFStringRef macPath = CFURLCopyFileSystemPath(appUrlRef, kCFURLPOSIXPathStyle);
@@ -29,6 +24,13 @@ int main(int argc, char *argv[])
         QDir::setCurrent(bndlPathPtr);
     }
 #endif
+
+    qDebug() << "Working directory: " << QDir::currentPath();
+
+    if(!RocketSystem::getInstance().initialize())
+    {
+        return -1;
+    }
 
     Rockete w;
     w.show();
