@@ -1,8 +1,13 @@
 #include "Rockete.h"
+#include <QDebug>
+#include <QDir>
 #include <QtGui/QApplication>
 #include "RocketSystem.h"
 #include "ToolManager.h"
 #include "EditionHelper.h"
+#ifdef Q_WS_MAC
+# include <CoreFoundation/CoreFoundation.h>
+#endif
 
 int main(int argc, char *argv[])
 {
@@ -14,6 +19,16 @@ int main(int argc, char *argv[])
     {
         return -1;
     }
+
+#ifdef Q_WS_MAC
+    CFURLRef appUrlRef = CFBundleCopyBundleURL(CFBundleGetMainBundle());
+    CFStringRef macPath = CFURLCopyFileSystemPath(appUrlRef, kCFURLPOSIXPathStyle);
+    const char *bndlPathPtr = CFStringGetCStringPtr(macPath, kCFStringEncodingUTF8);
+    if (bndlPathPtr) {
+        qDebug() << "Using mac bundle path for cwd: " << bndlPathPtr;
+        QDir::setCurrent(bndlPathPtr);
+    }
+#endif
 
     Rockete w;
     w.show();

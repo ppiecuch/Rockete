@@ -1,8 +1,13 @@
 #include "ProjectManager.h"
 
+#include <QDebug>
 #include <QFile>
 #include <QFileInfo>
 #include "LocalizationManagerInterface.h"
+
+#ifdef Q_WS_MAC
+# include <CoreFoundation/CoreFoundation.h>
+#endif
 
 ProjectManager::ProjectManager()
 {
@@ -14,6 +19,8 @@ ProjectManager::~ProjectManager()
 
 void ProjectManager::Initialize(const QString &filename)
 {
+    qDebug() << "Initialize project manager at: " << filename;
+
     QFileInfo file_info(filename);
     QFile file(filename);
     domDocument.clear();
@@ -30,6 +37,15 @@ void ProjectManager::Initialize(const QString &filename)
     file.close();
 
     projectName = file_info.baseName();
+
+#ifdef Q_WS_MAC
+    CFURLRef appUrlRef = CFBundleCopyBundleURL(CFBundleGetMainBundle());
+    CFStringRef macPath = CFURLCopyFileSystemPath(appUrlRef, kCFURLPOSIXPathStyle);
+    const char *bndlPathPtr = CFStringGetCStringPtr(macPath, kCFStringEncodingUTF8)?:"";
+    // char path[PATH_MAX]; CFStringGetFileSystemRepresentation(s, path, sizeof(path)); // TODO: check if this is needed.
+
+    qDebug() << "Using mac bundle path: " << bndlPathPtr;
+#endif
 
     QDomNodeList node_list = domDocument.elementsByTagName("Font");
 
@@ -57,7 +73,7 @@ void ProjectManager::Initialize(const QString &filename)
 
     node_list = domDocument.elementsByTagName("Texture");
 
-    for(int i = 0; i < node_list.count(); i++)
+    if (node_list.count()) for(int i = 0; i < node_list.count(); i++)
     {
         QDomNode node = node_list.at(i);
         if(node.firstChild().isText())
@@ -77,6 +93,10 @@ void ProjectManager::Initialize(const QString &filename)
                 texturePaths.last().append("/");
             }
         }
+    } else {
+#ifdef Q_WS_MAC
+        texturePaths << bndlPathPtr << "/textures";
+#endif
     }
 
     node_list = domDocument.elementsByTagName("Interface");
@@ -194,4 +214,9 @@ void ProjectManager::Initialize(const QString &filename)
     {
         snippetsFolderPath = "snippets/";
     }
+
+#ifdef Q_WS_MAC
+    CFRelease(appUrlRef);
+    CFRelease(macPath);
+#endif
 }

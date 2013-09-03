@@ -52,8 +52,7 @@ int Settings::getTabSize()
 
 void Settings::setBackroundFileName(const QString &fileName)
 {
-    Rocket::Core::Vector2i
-        dimensions;
+    Rocket::Core::Vector2i dimensions;
     
     GraphicSystem::loadTexture( backgroundTextureHandle, dimensions, fileName.toAscii().data() );
     settings.setValue("File/BackgroundFileName", fileName);

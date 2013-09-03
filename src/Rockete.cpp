@@ -64,22 +64,22 @@ void logMessageOutput( QtMsgType type, const char *msg )
         {
         case QtDebugMsg:
                 fprintf( stderr, "%s Debug: %s \n", QTime::currentTime().toString().toAscii().data(), msg );
-                sMsg = "<blue>"+sMsg+"</blue>";
+                sMsg = "<font color=blue>"+QUrl::toPercentEncoding(sMsg)+"</font>";
                 mw->logMessage(""+sMsg);
                 break;
         case QtCriticalMsg:
                 fprintf( stderr, "%s Critical: %s \n", QTime::currentTime().toString().toAscii().data(), msg );
-                sMsg = "<red><b>"+sMsg+"</></red>";
-                mw->logMessage("<b>Critical:</b>"+sMsg);
+                sMsg = "<font color=red><b>"+QUrl::toPercentEncoding(sMsg)+"</></font>";
+                mw->logMessage("<b>Critical:</b> "+sMsg);
                 break;
         case QtWarningMsg:
                 fprintf( stderr, "%s Warning: %s \n", QTime::currentTime().toString().toAscii().data(), msg );
-                sMsg = "<red>"+sMsg+"</red>";
-                mw->logMessage("<b>Warning:</b>"+sMsg);
+                sMsg = "<font color=red>"+QUrl::toPercentEncoding(sMsg)+"</font>";
+                mw->logMessage("<b>Warning:</b> "+sMsg);
                 break;
         case QtFatalMsg:
                 fprintf( stderr, "%s Fatal: %s \n", QTime::currentTime().toString().toAscii().data(), msg );
-                mw->logMessage("Fatal:"+sMsg);
+                mw->logMessage("Fatal: "+sMsg);
                 abort();
         }
 }
@@ -107,6 +107,7 @@ Rockete::Rockete(QWidget *parent, Qt::WFlags flags)
     renderingView = ui.renderingView;
 
     // Toolbar.
+    ui.mainToolBar->addAction(ui.actionNew_project);
     ui.mainToolBar->addAction(ui.actionOpen);
     ui.mainToolBar->addAction(ui.actionSave);
     ui.mainToolBar->addSeparator();
@@ -124,9 +125,13 @@ Rockete::Rockete(QWidget *parent, Qt::WFlags flags)
     {
         openProject(QApplication::arguments()[1].toAscii().data());
     }
-    else if(!Settings::getProject().isEmpty())
+    else if(!Settings::getProject().isEmpty() && QFile::exists(Settings::getProject()))
     {
         openProject(Settings::getProject());
+    }
+    else
+    {
+        newProject();
     }
 
     ToolManager::getInstance().initialize();
@@ -359,6 +364,11 @@ void Rockete::menuOpenClicked()
     {
         openFile(file_path);
     }
+}
+
+void Rockete::menuNewProjectClicked()
+{
+    newProject();
 }
 
 void Rockete::menuOpenProjectClicked()
@@ -1214,6 +1224,39 @@ void Rockete::checkTextChanged(int index)
     }
 }
 
+void Rockete::newProject()
+{
+    static int untitled_counted = 1;
+
+    QString filePath = f_ssprintf("<untitled %d>.rproj", untitled_counted);
+    ProjectManager::getInstance().Initialize(filePath);
+
+    ui.projectFilesTreeWidget->clear();
+    ui.projectFilesTreeWidget->clear();
+    Settings::setProject(filePath);
+
+    foreach( QString path, ProjectManager::getInstance().getFontPaths())
+    {
+        populateTreeView("Fonts", path);
+        RocketSystem::getInstance().loadFonts(path);
+    }
+
+    foreach( QString path, ProjectManager::getInstance().getTexturePaths())
+    {
+        populateTreeView("Textures", path);
+    }
+
+    foreach( QString path, ProjectManager::getInstance().getInterfacePaths())
+    {
+        populateTreeView("Interfaces", path);
+    }
+
+    populateTreeView("Word Lists", ProjectManager::getInstance().getWordListPath());
+    populateTreeView("Snippets", ProjectManager::getInstance().getSnippetsFolderPath());
+
+    ++untitled_counted;
+}
+
 void Rockete::openProject(const QString &filePath)
 {
     QFileInfo file_info(filePath);
@@ -1256,13 +1299,10 @@ int Rockete::openDocument(const char *file_path)
 
     if (!file_info.exists())
     {
-        // :TODO: display error message
+        QMessageBox::information(NULL, "File not found", "File "+QString(file_path)+" not found.", QMessageBox::Ok);
         return -1;
     }
-    // DIRTY: TO REDO: file_info should be an argument (ctor || initialize)
-    new_document = new OpenedDocument;
-
-    new_document->fileInfo = file_info;
+    new_document = new OpenedDocument(file_info);
     new_document->initialize();
     new_document->rocketDocument = RocketHelper::loadDocumentFromMemory(new_document->toPlainText());
     new_document->rocketDocument->RemoveReference();

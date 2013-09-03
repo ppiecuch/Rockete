@@ -7,6 +7,10 @@
 OpenedDocument::OpenedDocument() : selectedElement(NULL)
 {
 }
+OpenedDocument::OpenedDocument(QFileInfo file_info) : selectedElement(NULL)
+{
+    fileInfo = file_info;
+}
 
 void OpenedDocument::initialize()
 {

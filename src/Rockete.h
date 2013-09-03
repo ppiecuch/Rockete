@@ -47,6 +47,7 @@ public:
 
 public slots:
     void menuOpenClicked();
+    void menuNewProjectClicked();
     void menuOpenProjectClicked();
     void menuSaveClicked();
     void menuSaveAsClicked();
@@ -89,6 +90,7 @@ protected:
     virtual void closeEvent(QCloseEvent *event);
 
 private:
+    void newProject();
     void openProject(const QString &filePath);
     int openDocument(const char *);
     int openStyleSheet(const char *);

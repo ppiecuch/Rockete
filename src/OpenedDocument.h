@@ -14,6 +14,7 @@ class OpenedDocument : public OpenedFile
     Q_OBJECT
 public:
     OpenedDocument();
+    OpenedDocument(QFileInfo file_info);
 
     virtual void initialize();
     void replaceInnerRMLFromTagName(const QString &tag_name, const QString &new_content);
