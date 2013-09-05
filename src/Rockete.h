@@ -110,14 +110,14 @@ private:
     QList<QAction*> recentFileActionList;
     QComboBox *searchBox;
     QComboBox *languageBox;
-    QLabel *labelZoom;
+    QLabel *labelZoom, *labelPos;
     QFileSystemWatcher *fileWatcher;
     bool isReloadingFile;
     QMap<int, QString> fileChangedOutsideArray;
     WizardButton *wizard;
     QTreeWidgetItem *selectedTreeViewItem;
     DocumentHierarchyEventFilter *hierarchyEventFilter;
-    QDRuler *mHorzRuler, *mVertRuler;
+    QDRuler *horzRuler, *vertRuler;
 
 public:
     static Rockete *instance;

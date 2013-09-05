@@ -5,6 +5,7 @@
 #include <QMessageBox>
 #include <QInputDialog>
 #include <QUrl>
+#include <QLabel>
 #include "Rocket/Core/Types.h"
 #include "RocketSystem.h"
 #include "GraphicSystem.h"
@@ -15,7 +16,7 @@
 
 // Public:
 
-RenderingView::RenderingView(QWidget *parent) : QGLWidget(parent) 
+RenderingView::RenderingView(QWidget *parent) : QGLWidget(parent), horzRuler(NULL), vertRuler(NULL)
 {
     setMouseTracking(true);
     setAcceptDrops(true);
@@ -23,6 +24,17 @@ RenderingView::RenderingView(QWidget *parent) : QGLWidget(parent)
     itMustUpdatePositionOffset = false;
     positionOffset.x=0;
     positionOffset.y=0;
+}
+
+void RenderingView::setRulers(QDRuler *horzRuler, QDRuler *vertRuler)
+{
+    this->horzRuler = horzRuler;
+    this->vertRuler = vertRuler;
+}
+
+void RenderingView::setPosLabel(QLabel *posLabel)
+{
+    this->posLabel = posLabel;
 }
 
 void RenderingView::keyPressEvent(QKeyEvent* event)
@@ -99,9 +111,9 @@ void RenderingView::zoomIn()
 void RenderingView::zoomOut()
 {
     GraphicSystem::scaleFactor -= 0.1f;
-    if(GraphicSystem::scaleFactor < 0.0f)
+    if(GraphicSystem::scaleFactor < 0.5f)
     {
-        GraphicSystem::scaleFactor = 0.0f;
+        GraphicSystem::scaleFactor = 0.5f;
     }
     Rockete::getInstance().setZoomLevel(GraphicSystem::scaleFactor);
     repaint();
@@ -207,6 +219,9 @@ void RenderingView::mouseReleaseEvent(QMouseEvent *event)
 
 void RenderingView::mouseMoveEvent(QMouseEvent *event) 
 {
+    if (horzRuler) horzRuler->setCursorPos(this->mapToGlobal(event->pos()));
+    if (vertRuler) vertRuler->setCursorPos(this->mapToGlobal(event->pos()));
+    if (posLabel) posLabel->setText(QString("Pos: %1x%2").arg(event->x()).arg(event->y()));
     if (itMustUpdatePositionOffset) {
         mousePositionOffset.x=event->x()-startMousePosition.x;
         mousePositionOffset.y=event->y()-startMousePosition.y;

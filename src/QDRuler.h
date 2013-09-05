@@ -78,7 +78,8 @@ public slots:
     void setCursorPos(const QPoint cursorPos)
     {
         mCursorPos = this->mapFromGlobal(cursorPos);
-        mCursorPos += QPoint(RULER_BREADTH, RULER_BREADTH);
+        // seems to be not needed:
+        // mCursorPos += QPoint(RULER_BREADTH, RULER_BREADTH);
         update();
     }
 

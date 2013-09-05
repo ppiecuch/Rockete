@@ -108,6 +108,7 @@ Rockete::Rockete(QWidget *parent, Qt::WFlags flags)
 
     renderingView = ui.renderingView;
     addRulers();
+    renderingView->setRulers(horzRuler, vertRuler);
 
     // Toolbar.
     ui.mainToolBar->addAction(ui.actionNew_project);
@@ -170,9 +171,16 @@ Rockete::Rockete(QWidget *parent, Qt::WFlags flags)
     
 
     labelZoom = new QLabel(parent);
+    labelZoom->setFrameStyle(QFrame::Panel | QFrame::Sunken);
     labelZoom->setText("Zoom: 100%");
+    labelPos = new QLabel(parent);
+    labelPos->setFrameStyle(QFrame::Panel | QFrame::Sunken);
+    labelPos->setText("Cursor: -/-");
 
+    ui.statusBar->addPermanentWidget(labelPos);
     ui.statusBar->addPermanentWidget(labelZoom);
+
+    renderingView->setPosLabel(labelPos);
 
     fileWatcher = new QFileSystemWatcher();
 
@@ -348,13 +356,15 @@ QString Rockete::getPathForFileName(const QString &filename)
 
 void Rockete::setZoomLevel(float level)
 {
-    QString
-        string_level;
+    QString string_level;
 
     string_level.setNum(level * 100.0f);
     string_level += "%";
 
     labelZoom->setText("Zoom: "+string_level);
+
+    horzRuler->setRulerZoom(level);
+    vertRuler->setRulerZoom(level);
 }
 
 // Public slots:
@@ -1481,15 +1491,15 @@ void Rockete::addRulers()
     layout->setSpacing(0);
     layout->setMargin(0);
 
-    mHorzRuler = new QDRuler(QDRuler::Horizontal, ui.renderingViewBack);
-    mVertRuler = new QDRuler(QDRuler::Vertical, ui.renderingViewBack);
+    horzRuler = new QDRuler(QDRuler::Horizontal, ui.renderingViewBack);
+    vertRuler = new QDRuler(QDRuler::Vertical, ui.renderingViewBack);
 
     QWidget* fake = new QWidget();
     fake->setBackgroundRole(QPalette::Window);
     fake->setFixedSize(RULER_BREADTH,RULER_BREADTH);
     layout->addWidget(fake,0,0);
-    layout->addWidget(mHorzRuler,0,1);
-    layout->addWidget(mVertRuler,1,0);
+    layout->addWidget(horzRuler,0,1);
+    layout->addWidget(vertRuler,1,0);
     layout->addWidget(ui.renderingView,1,1);
 
     layout->update();

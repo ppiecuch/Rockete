@@ -8,12 +8,16 @@
 #include <QDropEvent>
 #include <QDragEnterEvent>
 
+class QDRuler;
+class QLabel;
 class RenderingView : public QGLWidget 
 {
     Q_OBJECT
 
 public:
     RenderingView(QWidget *parent = NULL);
+    void setRulers(QDRuler *horzRuler, QDRuler *vertRuler);
+    void setPosLabel(QLabel *label);
     void keyPressEvent(QKeyEvent *event);
     void changeCurrentDocument(OpenedDocument *document);
     OpenedDocument *getCurrentDocument(){return currentDocument;};
@@ -55,6 +59,9 @@ private:
     Vector2f startMousePosition;
     Vector2f mousePositionOffset;
     bool itMustUpdatePositionOffset;
+
+    QDRuler *vertRuler, *horzRuler;
+    QLabel *posLabel;
 };
 
 #endif
