@@ -21,6 +21,7 @@
 #include <QShortcut>
 #include "ProjectManager.h"
 #include <QPluginLoader>
+#include "QDRuler.h"
 #include "LocalizationManagerInterface.h"
 #include "OpenedLuaScript.h"
 
@@ -106,6 +107,7 @@ Rockete::Rockete(QWidget *parent, Qt::WFlags flags)
     generateMenuRecent();
 
     renderingView = ui.renderingView;
+    addRulers();
 
     // Toolbar.
     ui.mainToolBar->addAction(ui.actionNew_project);
@@ -168,7 +170,7 @@ Rockete::Rockete(QWidget *parent, Qt::WFlags flags)
     
 
     labelZoom = new QLabel(parent);
-    labelZoom->setText("100%");
+    labelZoom->setText("Zoom: 100%");
 
     ui.statusBar->addPermanentWidget(labelZoom);
 
@@ -352,7 +354,7 @@ void Rockete::setZoomLevel(float level)
     string_level.setNum(level * 100.0f);
     string_level += "%";
 
-    labelZoom->setText(string_level);
+    labelZoom->setText("Zoom: "+string_level);
 }
 
 // Public slots:
@@ -1467,6 +1469,30 @@ void Rockete::closeTab(int index, bool must_save)
         RocketHelper::unloadDocument(doc->rocketDocument);
     }
     delete(removed_widget);
+}
+
+void Rockete::addRulers()
+{
+    //setViewportMargins(RULER_BREADTH,RULER_BREADTH,0,0);
+    QGridLayout *layout = (QGridLayout*)ui.renderingViewBack->layout();
+
+    layout->removeWidget(ui.renderingView);
+
+    layout->setSpacing(0);
+    layout->setMargin(0);
+
+    mHorzRuler = new QDRuler(QDRuler::Horizontal, ui.renderingViewBack);
+    mVertRuler = new QDRuler(QDRuler::Vertical, ui.renderingViewBack);
+
+    QWidget* fake = new QWidget();
+    fake->setBackgroundRole(QPalette::Window);
+    fake->setFixedSize(RULER_BREADTH,RULER_BREADTH);
+    layout->addWidget(fake,0,0);
+    layout->addWidget(mHorzRuler,0,1);
+    layout->addWidget(mVertRuler,1,0);
+    layout->addWidget(ui.renderingView,1,1);
+
+    layout->update();
 }
 
 void Rockete::logMessage(QString aMsg)

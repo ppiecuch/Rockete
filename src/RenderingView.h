@@ -37,7 +37,7 @@ protected:
     virtual void wheelEvent(QWheelEvent *event);
 
 private:
-    void drawGrid();
+    void drawAxisGrid();
     void drawBackground();
 
     inline Vector2f getMousePositionInDocument(const int x, const int y) const {

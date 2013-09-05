@@ -10,6 +10,8 @@
 #include "GraphicSystem.h"
 #include "RocketHelper.h"
 #include "ToolManager.h"
+#include "QDRuler.h"
+#include "GLGrid.h"
 
 // Public:
 
@@ -143,7 +145,9 @@ void RenderingView::paintGL()
     GraphicSystem::drawBackground();
     glEnable( GL_BLEND );
     glDisable(GL_TEXTURE_2D);
-    drawGrid();
+
+    drawAxisGrid();
+    RenderGrid(RocketSystem::getInstance().getContext()->GetDimensions().x, RocketSystem::getInstance().getContext()->GetDimensions().y, GraphicSystem::scaleFactor, 10, 10, 2, true);
 
     RocketSystem::getInstance().getContext()->Render();
 
@@ -246,7 +250,7 @@ void RenderingView::wheelEvent(QWheelEvent *event)
 
 // Private:
 
-void RenderingView::drawGrid()
+void RenderingView::drawAxisGrid()
 {
     glColor3f(0.5f, 0.5f, 0.5f);
     glBegin(GL_LINES);

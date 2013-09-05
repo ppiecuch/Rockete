@@ -14,6 +14,7 @@
 #include "DocumentHierarchyEventFilter.h"
 
 
+class QDRuler;
 class Rockete : public QMainWindow
 {
     Q_OBJECT
@@ -100,6 +101,7 @@ private:
     void populateTreeView(const QString &top_item_name, const QString &directory_path);
     void loadPlugins();
     void closeTab(int index, bool must_save = true);
+    void addRulers();
 
     Ui::rocketeClass ui;
     RenderingView *renderingView;
@@ -115,6 +117,7 @@ private:
     WizardButton *wizard;
     QTreeWidgetItem *selectedTreeViewItem;
     DocumentHierarchyEventFilter *hierarchyEventFilter;
+    QDRuler *mHorzRuler, *mVertRuler;
 
 public:
     static Rockete *instance;

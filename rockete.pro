@@ -23,6 +23,7 @@ SOURCES += \
  ./src/LocalizationManagerInterface.cpp \
  ./src/LuaHighlighter.cpp \
  ./src/main.cpp \
+ ./src/GLGrid.cpp \
  ./src/OpenedDocument.cpp \
  ./src/OpenedFile.cpp \
  ./src/OpenedLuaScript.cpp \
@@ -68,6 +69,8 @@ HEADERS += \
  ./src/OpenedLuaScript.h \
  ./src/OpenedStyleSheet.h \
  ./src/OpenGL.h \
+ ./src/GLGrid.h \
+ ./src/QDRuler.h \
  ./src/ProjectManager.h \
  ./src/PropertyTreeModel.h \
  ./src/RenderingView.h \
