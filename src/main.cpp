@@ -15,6 +15,7 @@ int main(int argc, char *argv[])
 
     QApplication a( argc, argv );
 
+    qDebug() << "applicationDirPath: " << QCoreApplication::applicationDirPath();
 #ifdef Q_WS_MAC
     CFURLRef appUrlRef = CFBundleCopyBundleURL(CFBundleGetMainBundle());
     CFStringRef macPath = CFURLCopyFileSystemPath(appUrlRef, kCFURLPOSIXPathStyle);
@@ -22,6 +23,14 @@ int main(int argc, char *argv[])
     if (bndlPathPtr) {
         qDebug() << "Using mac bundle path for cwd: " << bndlPathPtr;
         QDir::setCurrent(bndlPathPtr);
+    } else {
+        // check if we are inside bundle:
+        QDir testDir = QDir(QCoreApplication::applicationDirPath()); testDir.cdUp(); testDir.cdUp();
+        QFileInfo appDir = QFileInfo(testDir.absolutePath());
+        if (appDir.isBundle()) {
+            qDebug() << "Starting from bundle: " << testDir.absolutePath();
+            QDir::setCurrent(testDir.absolutePath());
+        }
     }
 #endif
 

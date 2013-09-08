@@ -45,8 +45,8 @@ void ProjectManager::Initialize(const QString &filename)
     CFStringRef macPath = CFURLCopyFileSystemPath(appUrlRef, kCFURLPOSIXPathStyle);
     const char *bndlPathPtr = CFStringGetCStringPtr(macPath, kCFStringEncodingUTF8)?:".";
     // char path[PATH_MAX]; CFStringGetFileSystemRepresentation(s, path, sizeof(path)); // TODO: check if this is needed.
-
-    qDebug() << "Using mac bundle path: " << bndlPathPtr;
+    if (CFStringGetCStringPtr(macPath, kCFStringEncodingUTF8))
+        qDebug() << "Using mac bundle path: " << bndlPathPtr;
 #endif
 
     QDomNodeList node_list = domDocument.elementsByTagName("Font");

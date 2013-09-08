@@ -421,8 +421,9 @@ p, li { white-space: pre-wrap; }
      </property>
      <addaction name="actionEmpty"/>
     </widget>
-    <addaction name="actionOpen_project"/>
     <addaction name="actionNew_project"/>
+    <addaction name="actionOpen_project"/>
+    <addaction name="actionSave_project"/>
     <addaction name="separator"/>
     <addaction name="actionOpen"/>
     <addaction name="actionSave"/>
@@ -842,6 +843,17 @@ p, li { white-space: pre-wrap; }
     <string>Ctrl+N</string>
    </property>
   </action>
+  <action name="actionSave_project">
+   <property name="text">
+    <string>Save project</string>
+   </property>
+   <property name="toolTip">
+    <string>Save project</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+S</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
@@ -1185,6 +1197,22 @@ p, li { white-space: pre-wrap; }
    <signal>triggered()</signal>
    <receiver>rocketeClass</receiver>
    <slot>menuOpenProjectClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>656</x>
+     <y>402</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionSave_project</sender>
+   <signal>triggered()</signal>
+   <receiver>rocketeClass</receiver>
+   <slot>menuSaveProjectClicked()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>-1</x>

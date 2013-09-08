@@ -394,6 +394,16 @@ void Rockete::menuOpenProjectClicked()
     }
 }
 
+void Rockete::menuSaveProjectClicked()
+{
+    QString file_path = QFileDialog::getSaveFileName(this, tr("Open Rockete project..."), "", tr("libRocket project (*.rproj)"));
+
+    if (!file_path.isEmpty() && QFile::exists(file_path))
+    {
+        saveProject();
+    }
+}
+
 void Rockete::menuSaveClicked()
 {
     if(ui.codeTabWidget->count()==0)
@@ -1305,6 +1315,10 @@ void Rockete::openProject(const QString &filePath)
     }
 }
 
+void Rockete::saveProject()
+{
+}
+
 int Rockete::openDocument(const char *file_path)
 {
     OpenedDocument *new_document;
@@ -1367,6 +1381,124 @@ void Rockete::generateMenuRecent()
     {
         recentFileActionList.append(ui.menuRecent->addAction(item));
     }
+}
+
+bool Rockete::readSpriteSheetInfo(QTreeWidgetItem *item, const QString &texture)
+{
+    // 1. texpack catalog info:
+    bool valid;
+    QImage image(texture);
+    FILE *cat_file = fopen( QString(QFileInfo(texture).completeBaseName()+".cat").toUtf8().data(), "r" );
+    if (!cat_file)
+            goto format2;
+    valid = false; while (!feof(cat_file)) {
+        int index;
+        char tname[256];
+        unsigned left;
+        unsigned top;
+        unsigned right;
+        unsigned bottom;
+        unsigned w, h;
+        float left_r;
+        float right_r;
+        float top_r;
+        float bottom_r;
+        float width_r;
+        float height_r;
+        unsigned format;
+        unsigned bpp;
+        int pnum = fscanf( cat_file, "%d;%s;%d;%d;%d;%d;%f;%f;%f;%f;%d;%d;%f;%f;%d;%d;",
+                 /*  1 */ &index,
+                 /*  2 */ tname,
+                 /*  3 */ &left,
+                 /*  4 */ &top,
+                 /*  5 */ &right,
+                 /*  6 */ &bottom,
+                 /*  7 */ &left_r,
+                 /*  8 */ &top_r,
+                 /*  9 */ &right_r,
+                 /* 10 */ &bottom_r,
+                 /* 11 */ &w,
+                 /* 12 */ &h,
+                 /* 13 */ &width_r,
+                 /* 14 */ &height_r,
+                 /* 15 */ &format,
+                 /* 16 */ &bpp );
+        if (pnum > 4) {
+            QTreeWidgetItem *new_item = new QTreeWidgetItem(item);
+            QImage copy = image.copy( left, bottom, right-left, top-bottom);
+            new_item->setIcon(0, QPixmap::fromImage(copy));
+            new_item->setText(1, tname);
+            new_item->setToolTip(1, QString("%1:%2").arg(QFileInfo(texture).fileName()));
+            QString data = QString("%1,%2,%3,%4").arg(left).arg(bottom).arg(right-left).arg(top-bottom);
+            new_item->setData(0, Qt::UserRole, data);
+            valid = true;
+        }
+    };
+    if (valid) {
+        item->setIcon(0, QIcon(":/images/icon_atlas.png"));
+        return true;
+    }
+
+    // <?xml version="1.0" encoding="UTF-8"?>
+    // <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+    // <plist version="1.0">
+    //     <dict>
+    //         <key>frames</key>
+    //         <dict>
+    //             <key>Icon.png</key>
+    //             <dict>
+    //                 <key>frame</key>
+    //                 <string>{{2,2},{57,57}}</string>
+    //                 <key>offset</key>
+    //                 <string>{0,0}</string>
+    //                 <key>rotated</key>
+    //                 <false/>
+    //                 <key>sourceColorRect</key>
+    //                 <string>{{0,0},{57,57}}</string>
+    //                 <key>sourceSize</key>
+    //                 <string>{57,57}</string>
+    //             </dict>
+    //         </dict>
+    //         <key>metadata</key>
+    //         <dict>
+    //             <key>format</key>
+    //             <integer>2</integer>
+    //             <key>realTextureFileName</key>
+    //             <string>nonencryptedAtlas.pvr.ccz</string>
+    //             <key>size</key>
+    //             <string>{64,64}</string>
+    //             <key>smartupdate</key>
+    //             <string>$TexturePacker:SmartUpdate:5b30a75137a4f533396670236d41f11c$</string>
+    //             <key>textureFileName</key>
+    //             <string>nonencryptedAtlas.pvr.ccz</string>
+    //         </dict>
+    //     </dict>
+    // </plist>
+format2:
+    // 2. cocos2d plist info:
+
+    // ;Sprite Monkey Coordinates, UTF-8
+    // ;Transparency, Sprite Sheet Name, Image Width, Image Height
+    // Alpha,/Users/jbaker/Desktop/elf_run.png,1024,1024
+    // ;Image/Frame Name, Clip X, Clip Y, Clip Width, Clip Height
+    // elf run 00001,0,0,256,256
+    // elf run 00002,256,0,256,256
+    // elf run 00003,512,0,256,256
+    // elf run 00004,768,0,256,256
+    // elf run 00005,0,256,256,256
+    // elf run 00006,256,256,256,256
+    // elf run 00007,512,256,256,256
+    // elf run 00008,768,256,256,256
+    // elf run 00009,0,512,256,256
+    // elf run 00010,256,512,256,256
+    // elf run 00011,512,512,256,256
+    // elf run 00012,768,512,256,256
+    // elf run 00013,0,768,256,256
+    // elf run 00014,256,768,256,256
+    // elf run 00015,512,768,256,256
+    // 3. smc
+    return false;
 }
 
 void Rockete::populateTreeView(const QString &top_item_name, const QString &directory_path)

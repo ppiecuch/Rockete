@@ -50,6 +50,7 @@ public slots:
     void menuOpenClicked();
     void menuNewProjectClicked();
     void menuOpenProjectClicked();
+    void menuSaveProjectClicked();
     void menuSaveClicked();
     void menuSaveAsClicked();
     void menuCloseClicked();
@@ -93,11 +94,13 @@ protected:
 private:
     void newProject();
     void openProject(const QString &filePath);
+    void saveProject();
     int openDocument(const char *);
     int openStyleSheet(const char *);
     int openLuaScript(const char *file_path);
     int openASCIIFile(const char *);
     void generateMenuRecent();
+    bool readSpriteSheetInfo(QTreeWidgetItem *item, const QString &texture);
     void populateTreeView(const QString &top_item_name, const QString &directory_path);
     void loadPlugins();
     void closeTab(int index, bool must_save = true);
