@@ -93,11 +93,11 @@ protected:
 
 private:
     void newProject();
-    void openProject(const QString &filePath);
-    void saveProject();
+    void openProject(const char *);
+    void saveProject(const char *);
     int openDocument(const char *);
     int openStyleSheet(const char *);
-    int openLuaScript(const char *file_path);
+    int openLuaScript(const char *);
     int openASCIIFile(const char *);
     void generateMenuRecent();
     bool readSpriteSheetInfo(QTreeWidgetItem *item, const QString &texture);

@@ -3,11 +3,29 @@
 #include <QDebug>
 #include <QFile>
 #include <QFileInfo>
+#include <QXmlStreamWriter>
+#include <QMessageBox>
 #include "LocalizationManagerInterface.h"
 
 #ifdef Q_WS_MAC
 # include <CoreFoundation/CoreFoundation.h>
 #endif
+
+QString XML_utf8( QString t )
+{
+  //the following checks are necessary before exporting
+  //strings to XML. see http://hdf.ncsa.uiuc.edu/HDF5/XML/xml_escape_chars.html for details
+  QString text = t;
+
+  text.replace("\"","&quot;");
+  text.replace("'", "&apos;");
+  text.replace("<", "&lt;");
+  text.replace(">", "&gt;");
+  text.replace("\n", "&#10;");
+  text.replace("\r", "&#13;");
+  text.replace("&", "&amp;");   /*  qt4 toUtf8 dont replace && */
+  return text;
+}
 
 ProjectManager::ProjectManager()
 {
@@ -23,7 +41,9 @@ void ProjectManager::Initialize(const QString &filename)
 
     QFileInfo file_info(filename);
     QFile file(filename);
-    domDocument.clear();
+
+    QDomDocument domDocument;
+
     fontPaths.clear();
     texturePaths.clear();
     interfacePaths.clear();
@@ -229,4 +249,51 @@ void ProjectManager::Initialize(const QString &filename)
     CFRelease(appUrlRef);
     CFRelease(macPath);
 #endif
+}
+
+static void _saveQStringList(QXmlStreamWriter &xmlWriter, const QString &sec, const QStringList &list)
+{
+    xmlWriter.writeStartElement(sec);
+    foreach(const QString &str, list) {
+        xmlWriter.writeStartElement("string");
+        xmlWriter.writeCharacters(str);
+        xmlWriter.writeEndElement();
+    }
+    xmlWriter.writeEndElement();
+}
+
+void ProjectManager::Serialize(const QString &filename)
+{
+    QFile file(filename);
+    if (!file.open(QIODevice::WriteOnly)) {
+        /* show wrror message if not able to open file */
+        QMessageBox::warning(0, "Read only", "The file is in read only mode");
+    }
+    else
+    {
+        qDebug() << "Serialize project at: " << filename;
+
+        QXmlStreamWriter xmlWriter(&file);
+        xmlWriter.setAutoFormatting(true);
+
+        xmlWriter.writeStartDocument();
+
+        _saveQStringList(xmlWriter, "Font", fontPaths);
+        _saveQStringList(xmlWriter, "Texture", texturePaths);
+        _saveQStringList(xmlWriter, "Interface", interfacePaths);
+        xmlWriter.writeStartElement("SnippetsFolder");
+        xmlWriter.writeCharacters(snippetsFolderPath);
+        xmlWriter.writeEndElement();
+        xmlWriter.writeStartElement("WordList");
+        xmlWriter.writeCharacters(wordListsPath);
+        xmlWriter.writeEndElement();
+        xmlWriter.writeStartElement("LocalizationOpeningTag");
+        xmlWriter.writeCharacters(localizationOpeningTag);
+        xmlWriter.writeEndElement();
+        xmlWriter.writeStartElement("LocalizationClosingTag");
+        xmlWriter.writeCharacters(localizationClosingTag);
+        xmlWriter.writeEndElement();
+
+        xmlWriter.writeEndDocument();
+    }
 }

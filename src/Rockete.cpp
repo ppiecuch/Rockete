@@ -131,7 +131,7 @@ Rockete::Rockete(QWidget *parent, Qt::WFlags flags)
     }
     else if(!Settings::getProject().isEmpty() && QFile::exists(Settings::getProject()))
     {
-        openProject(Settings::getProject());
+        openProject(Settings::getProject().toUtf8().constData());
     }
     else
     {
@@ -390,7 +390,7 @@ void Rockete::menuOpenProjectClicked()
 
     if (!file_path.isEmpty() && QFile::exists(file_path))
     {
-        openProject(file_path);
+        openProject(file_path.toUtf8().constData());
     }
 }
 
@@ -398,9 +398,9 @@ void Rockete::menuSaveProjectClicked()
 {
     QString file_path = QFileDialog::getSaveFileName(this, tr("Open Rockete project..."), "", tr("libRocket project (*.rproj)"));
 
-    if (!file_path.isEmpty() && QFile::exists(file_path))
+    if (!file_path.isEmpty())
     {
-        saveProject();
+        saveProject(file_path.toUtf8().constData());
     }
 }
 
@@ -1280,18 +1280,18 @@ void Rockete::newProject()
     ++untitled_counted;
 }
 
-void Rockete::openProject(const QString &filePath)
+void Rockete::openProject(const char *file_path)
 {
-    QFileInfo file_info(filePath);
+    QFileInfo file_info(file_path);
 
     if (file_info.suffix() == "rproj")
     {
 
-        ProjectManager::getInstance().Initialize(filePath);
+        ProjectManager::getInstance().Initialize(file_path);
 
         ui.projectFilesTreeWidget->clear();
         ui.projectFilesTreeWidget->clear();
-        Settings::setProject(filePath);
+        Settings::setProject(file_path);
 
         foreach( QString path, ProjectManager::getInstance().getFontPaths())
         {
@@ -1315,8 +1315,9 @@ void Rockete::openProject(const QString &filePath)
     }
 }
 
-void Rockete::saveProject()
+void Rockete::saveProject(const char *file_path)
 {
+    ProjectManager::getInstance().Serialize(file_path);
 }
 
 int Rockete::openDocument(const char *file_path)

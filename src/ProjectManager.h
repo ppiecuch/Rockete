@@ -16,6 +16,8 @@ public:
     }
 
     void Initialize(const QString &filename);
+    void Serialize(const QString &filename);
+
     const QStringList &getFontPaths(){return fontPaths;}
     const QStringList &getTexturePaths(){return texturePaths;}
     const QStringList &getInterfacePaths(){return interfacePaths;}
@@ -24,7 +26,6 @@ public:
     const QString &getLocalizationOpeningTag(){return localizationOpeningTag;}
     const QString &getLocalizationClosingTag(){return localizationClosingTag;}
 private:
-    QDomDocument domDocument;
     QString projectName;
     QStringList fontPaths;
     QStringList texturePaths;
