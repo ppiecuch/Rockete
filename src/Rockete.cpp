@@ -11,6 +11,7 @@
 #include <QComboBox>
 #include <QApplication>
 #include <QMessageBox>
+#include <QDebug>
 #include "AttributeTreeModel.h"
 #include "RocketSystem.h"
 #include "ActionManager.h"
@@ -402,6 +403,8 @@ void Rockete::menuSaveProjectClicked()
     {
         saveProject(file_path.toUtf8().constData());
     }
+    // reload project from new path:
+    openProject(file_path.toUtf8().constData());
 }
 
 void Rockete::menuSaveClicked()
@@ -693,9 +696,19 @@ void Rockete::fileTreeClicked(QTreeWidgetItem *item, int /*column*/)
 {
     if(item->text(1).endsWith("png")||item->text(1).endsWith("jpg")) // no native support for tga
     {
-        QPixmap pixmap(getPathForFileName(item->text(1)));
-        pixmap.scaled(QSize(ui.texturePreviewLabel->width(),ui.texturePreviewLabel->height()),Qt::KeepAspectRatio);
-        ui.texturePreviewLabel->setPixmap(pixmap.scaled(QSize(ui.texturePreviewLabel->width(),ui.texturePreviewLabel->height()),Qt::KeepAspectRatio));
+        QString data = item->data(1, Qt::UserRole).toString();
+        if (data.length()) {
+            QImage image(item->data(0, Qt::UserRole).toString());
+            int l=0,b=0,w=0,h=0; int n = sscanf(data.toAscii().constData(), "%d,%d,%d,%d", &l, &b, &w, &h); if (n!=4)
+                qDebug() << "Invalid format: " << data;
+            QImage copy = image.copy( l, b, w, h);
+            copy.scaled(QSize(ui.texturePreviewLabel->width(),ui.texturePreviewLabel->height()),Qt::KeepAspectRatio);
+            ui.texturePreviewLabel->setPixmap(QPixmap::fromImage(copy.scaled(QSize(ui.texturePreviewLabel->width(),ui.texturePreviewLabel->height()),Qt::KeepAspectRatio)));
+        } else {
+            QPixmap pixmap(getPathForFileName(item->text(1)));
+            pixmap.scaled(QSize(ui.texturePreviewLabel->width(),ui.texturePreviewLabel->height()),Qt::KeepAspectRatio);
+            ui.texturePreviewLabel->setPixmap(pixmap.scaled(QSize(ui.texturePreviewLabel->width(),ui.texturePreviewLabel->height()),Qt::KeepAspectRatio));
+        }
     }
 }
 
@@ -1146,7 +1159,10 @@ int Rockete::openFile(const QString &filePath)
 
     if(filePath.contains("memory]")) //librocket name for files in memory is [document in memory] since its not opened in the tabs it tries to open it...
         return -1;
-
+    if(file_info.suffix() == "rproj") {
+        openProject(file_info.absolutePath().toAscii().constData());
+        return -1;
+    }
     if(!file_info.exists())
     {
         foreach(QString path, ProjectManager::getInstance().getInterfacePaths())
@@ -1312,7 +1328,12 @@ void Rockete::openProject(const char *file_path)
         populateTreeView("Word Lists", ProjectManager::getInstance().getWordListPath());
         populateTreeView("Snippets", ProjectManager::getInstance().getSnippetsFolderPath());
 
-    }
+        if (file_info.exists()) {
+            Settings::setMostRecentFile(file_info.filePath());
+            generateMenuRecent();
+        }
+    } else
+        qWarning() << "Not a project file.";
 }
 
 void Rockete::saveProject(const char *file_path)
@@ -1389,9 +1410,11 @@ bool Rockete::readSpriteSheetInfo(QTreeWidgetItem *item, const QString &texture)
     // 1. texpack catalog info:
     bool valid;
     QImage image(texture);
-    FILE *cat_file = fopen( QString(QFileInfo(texture).completeBaseName()+".cat").toUtf8().data(), "r" );
+    QFileInfo tinfo(texture);
+    QString cat_filename = tinfo.absolutePath()+QDir::separator()+QString(tinfo.completeBaseName()+".cat");
+    FILE *cat_file = fopen( cat_filename.toUtf8().data(), "r" );
     if (!cat_file)
-            goto format2;
+        goto format2;
     valid = false; while (!feof(cat_file)) {
         int index;
         char tname[256];
@@ -1408,7 +1431,7 @@ bool Rockete::readSpriteSheetInfo(QTreeWidgetItem *item, const QString &texture)
         float height_r;
         unsigned format;
         unsigned bpp;
-        int pnum = fscanf( cat_file, "%d;%s;%d;%d;%d;%d;%f;%f;%f;%f;%d;%d;%f;%f;%d;%d;",
+        int pnum = fscanf( cat_file, "%d;%255[^;];%d;%d;%d;%d;%f;%f;%f;%f;%d;%d;%f;%f;%d;%d;",
                  /*  1 */ &index,
                  /*  2 */ tname,
                  /*  3 */ &left,
@@ -1427,12 +1450,13 @@ bool Rockete::readSpriteSheetInfo(QTreeWidgetItem *item, const QString &texture)
                  /* 16 */ &bpp );
         if (pnum > 4) {
             QTreeWidgetItem *new_item = new QTreeWidgetItem(item);
-            QImage copy = image.copy( left, bottom, right-left, top-bottom);
+            QImage copy = image.copy( left, bottom, right-left, bottom-top);
             new_item->setIcon(0, QPixmap::fromImage(copy));
             new_item->setText(1, tname);
-            new_item->setToolTip(1, QString("%1:%2").arg(QFileInfo(texture).fileName()));
-            QString data = QString("%1,%2,%3,%4").arg(left).arg(bottom).arg(right-left).arg(top-bottom);
-            new_item->setData(0, Qt::UserRole, data);
+            new_item->setToolTip(1, QString("%1:%2").arg(QFileInfo(texture).fileName()).arg(tname));
+            QString data = QString("%1,%2,%3,%4").arg(left).arg(bottom).arg(right-left).arg(bottom-top);
+            new_item->setData(0, Qt::UserRole, texture);
+            new_item->setData(1, Qt::UserRole, data);
             valid = true;
         }
     };
@@ -1514,18 +1538,18 @@ void Rockete::populateTreeView(const QString &top_item_name, const QString &dire
         directory_walker.next();
         if(!directory_walker.fileInfo().isDir() && !directory_walker.fileInfo().isHidden())
         {
-            QStringList
-                list;
+            QStringList list;
             list << directory_walker.fileInfo().fileName();
 
-            QTreeWidgetItem *new_item = new QTreeWidgetItem(item);
+            QTreeWidgetItem *new_item = new QTreeWidgetItem();
             new_item->setText(1,directory_walker.fileInfo().fileName());
             new_item->setToolTip(1, directory_walker.fileInfo().absoluteFilePath());
             new_item->setData(0, Qt::UserRole, directory_walker.fileInfo().filePath());
 
-            if(directory_walker.fileInfo().suffix() == "png" || directory_walker.fileInfo().suffix() == "tga" || directory_walker.fileInfo().suffix() == "jpg")
+            bool known = true; if(directory_walker.fileInfo().suffix() == "png" || directory_walker.fileInfo().suffix() == "tga" || directory_walker.fileInfo().suffix() == "jpg")
             {
                 new_item->setIcon(0, QIcon(directory_walker.fileInfo().absoluteFilePath()));
+                readSpriteSheetInfo(new_item, directory_walker.fileInfo().absoluteFilePath());
             }
             else if(directory_walker.fileInfo().suffix() == "snippet")
             {
@@ -1542,9 +1566,16 @@ void Rockete::populateTreeView(const QString &top_item_name, const QString &dire
             else if(directory_walker.fileInfo().suffix() == "lua")
             {
                 new_item->setIcon(0, QIcon(":/images/icon_lua.png"));
-            }
+            } else if(directory_walker.fileInfo().suffix() == "ttf" || directory_walker.fileInfo().suffix() == "otf" || directory_walker.fileInfo().suffix() == "fnt") {
+                // accept freetype fonts fonts
+                new_item->setIcon(0, QIcon(":/images/icon_fnt.png"));
+            } else
+                known = false;
 
-            items.append(new_item);
+            if (known) {
+                item->addChild(new_item);
+                items.append(new_item);
+            }
         }
     }
 

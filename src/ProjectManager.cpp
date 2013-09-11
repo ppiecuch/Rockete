@@ -51,8 +51,10 @@ void ProjectManager::Initialize(const QString &filename)
     if (QFile::exists(filename)) {
         if (!file.open(QIODevice::ReadOnly))
             return;
-        if (!domDocument.setContent(file.readAll())) {
+        QString errmsg; int errcol, errrow;
+        if (!domDocument.setContent(file.readAll(), &errmsg, &errrow, &errcol)) {
             file.close();
+            qDebug() << "Error parsing project: " << errmsg << ": line" << errrow << ",column" << errcol;
             return;
         }
         file.close();
@@ -79,7 +81,6 @@ void ProjectManager::Initialize(const QString &filename)
             const QString& nodeText = node.firstChild().toText().data();
             if(!(nodeText.contains(":") || nodeText.startsWith("/")))
             {
-
 	            fontPaths << file_info.path() + "/" + nodeText;
             } 
             else
@@ -93,7 +94,7 @@ void ProjectManager::Initialize(const QString &filename)
         }
     } else {
 #ifdef Q_WS_MAC
-        fontPaths << (QString(bndlPathPtr) + "/font/");
+        fontPaths << (QString(bndlPathPtr) + "/fonts/");
 #endif
     }
 
@@ -107,7 +108,6 @@ void ProjectManager::Initialize(const QString &filename)
             const QString& nodeText = node.firstChild().toText().data();
             if(!(nodeText.contains(":") || nodeText.startsWith("/")))
             {
-
                 texturePaths << file_info.path() + "/" + nodeText;
             } 
             else
@@ -135,7 +135,6 @@ void ProjectManager::Initialize(const QString &filename)
             const QString& nodeText = node.firstChild().toText().data();
             if(!(nodeText.contains(":") || nodeText.startsWith("/")))
             {
-
                 interfacePaths << file_info.path() + "/" + nodeText;
             } 
             else
@@ -163,7 +162,6 @@ void ProjectManager::Initialize(const QString &filename)
             const QString& nodeText = node.firstChild().toText().data();
             if(!(nodeText.contains(":") || nodeText.startsWith("/")))
             {
-
                 wordListsPath = file_info.path() + "/" + nodeText;
             } 
             else
@@ -227,7 +225,6 @@ void ProjectManager::Initialize(const QString &filename)
             const QString& nodeText = node.firstChild().toText().data();
             if(!(nodeText.contains(":") || nodeText.startsWith("/")))
             {
-
                 snippetsFolderPath = file_info.path() + "/" + nodeText;
             } 
             else
@@ -253,13 +250,11 @@ void ProjectManager::Initialize(const QString &filename)
 
 static void _saveQStringList(QXmlStreamWriter &xmlWriter, const QString &sec, const QStringList &list)
 {
-    xmlWriter.writeStartElement(sec);
     foreach(const QString &str, list) {
-        xmlWriter.writeStartElement("string");
+        xmlWriter.writeStartElement(sec);
         xmlWriter.writeCharacters(str);
         xmlWriter.writeEndElement();
     }
-    xmlWriter.writeEndElement();
 }
 
 void ProjectManager::Serialize(const QString &filename)
@@ -277,6 +272,7 @@ void ProjectManager::Serialize(const QString &filename)
         xmlWriter.setAutoFormatting(true);
 
         xmlWriter.writeStartDocument();
+        xmlWriter.writeStartElement("Project");
 
         _saveQStringList(xmlWriter, "Font", fontPaths);
         _saveQStringList(xmlWriter, "Texture", texturePaths);
@@ -294,6 +290,7 @@ void ProjectManager::Serialize(const QString &filename)
         xmlWriter.writeCharacters(localizationClosingTag);
         xmlWriter.writeEndElement();
 
+        xmlWriter.writeEndElement();
         xmlWriter.writeEndDocument();
     }
 }

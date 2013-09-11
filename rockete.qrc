@@ -24,5 +24,6 @@
         <file>images/tool_test.png</file>
         <file>images/project-new.png</file>
         <file>images/icon_atlas.png</file>
+        <file>images/icon_fnt.png</file>
     </qresource>
 </RCC>
