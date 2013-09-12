@@ -51,6 +51,7 @@ public slots:
     void menuNewProjectClicked();
     void menuOpenProjectClicked();
     void menuSaveProjectClicked();
+    void menuReloadProjectClicked();
     void menuSaveClicked();
     void menuSaveAsClicked();
     void menuCloseClicked();

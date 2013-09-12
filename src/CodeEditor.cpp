@@ -1,5 +1,6 @@
 #include "CodeEditor.h"
 
+#include <QDebug>
 #include <QScrollBar>
 #include <QStringListModel>
 #include "Settings.h"
@@ -167,7 +168,7 @@ bool CodeEditor::checkXmlCorrectness(QString & error_message)
             return false;
         }
 
-        if(opened_brace_counter < 0|| tag_delimiter_balance < 0)
+        if(opened_brace_counter < 0 || tag_delimiter_balance < 0)
         {
             error_message = "closing character ('>' or '}') before any opening one";
             parsingTextCursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor);
@@ -179,6 +180,7 @@ bool CodeEditor::checkXmlCorrectness(QString & error_message)
         {
             QString 
                 tag_text = parsingTextCursor.selectedText().trimmed();
+            parsingTextCursor.clearSelection(); // remove selection - otherwise movePosition will fail
 
             tag_text.remove('<');
 
@@ -226,8 +228,8 @@ bool CodeEditor::checkXmlCorrectness(QString & error_message)
         }
 
         // TODO: check l'ordre de fermeture
-
-        parsingTextCursor.movePosition(QTextCursor::Right, tag_delimiter_balance > 0 ? QTextCursor::KeepAnchor : QTextCursor::MoveAnchor);
+        if(!parsingTextCursor.movePosition(QTextCursor::Right, tag_delimiter_balance > 0 ? QTextCursor::KeepAnchor : QTextCursor::MoveAnchor))
+            qDebug() << "movePosition failed.";
     }
 
     if(isComentary)

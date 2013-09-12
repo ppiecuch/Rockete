@@ -101,7 +101,7 @@
             <enum>QTabWidget::Triangular</enum>
            </property>
            <property name="currentIndex">
-            <number>0</number>
+            <number>1</number>
            </property>
            <property name="tabsClosable">
             <bool>false</bool>
@@ -301,11 +301,11 @@ p, li { white-space: pre-wrap; }
        </widget>
        <widget class="QTabWidget" name="tabWidget_2">
         <property name="currentIndex">
-         <number>0</number>
+         <number>2</number>
         </property>
         <widget class="QWidget" name="tab_7">
          <attribute name="title">
-          <string>Document Hierarchy</string>
+          <string>Doc. Hierarchy</string>
          </attribute>
          <layout class="QVBoxLayout" name="verticalLayout_3">
           <item>
@@ -375,7 +375,7 @@ p, li { white-space: pre-wrap; }
         </widget>
         <widget class="QWidget" name="tab">
          <attribute name="title">
-          <string>TexturePreview</string>
+          <string>Preview</string>
          </attribute>
          <layout class="QVBoxLayout" name="verticalLayout">
           <item>
@@ -386,6 +386,19 @@ p, li { white-space: pre-wrap; }
               <height>1</height>
              </size>
             </property>
+            <property name="autoFillBackground">
+             <bool>false</bool>
+            </property>
+            <property name="styleSheet">
+             <string notr="true"> background-image: url(:/images/grid.png);
+ background-repeat: repeat-xy;</string>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Plain</enum>
+            </property>
             <property name="text">
              <string/>
             </property>
@@ -393,6 +406,39 @@ p, li { white-space: pre-wrap; }
              <set>Qt::AlignCenter</set>
             </property>
            </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="tab_8">
+         <attribute name="title">
+          <string>Cutting</string>
+         </attribute>
+         <layout class="QGridLayout" name="gridLayout_7">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_3">
+            <property name="text">
+             <string>Cap size:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QSpinBox" name="spinBox"/>
+          </item>
+          <item row="0" column="2">
+           <spacer name="horizontalSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>120</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item row="1" column="0" colspan="3">
+           <widget class="QTextBrowser" name="textBrowser"/>
           </item>
          </layout>
         </widget>
@@ -424,6 +470,7 @@ p, li { white-space: pre-wrap; }
     <addaction name="actionNew_project"/>
     <addaction name="actionOpen_project"/>
     <addaction name="actionSave_project"/>
+    <addaction name="actionReload_project"/>
     <addaction name="separator"/>
     <addaction name="actionOpen"/>
     <addaction name="actionSave"/>
@@ -857,6 +904,21 @@ p, li { white-space: pre-wrap; }
     <string>Ctrl+Shift+S</string>
    </property>
   </action>
+  <action name="actionReload_project">
+   <property name="icon">
+    <iconset resource="../rockete.qrc">
+     <normaloff>:/images/reload.png</normaloff>:/images/reload.png</iconset>
+   </property>
+   <property name="text">
+    <string>Reload project</string>
+   </property>
+   <property name="toolTip">
+    <string>Reload current project</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+R</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
@@ -1200,6 +1262,22 @@ p, li { white-space: pre-wrap; }
    <signal>triggered()</signal>
    <receiver>rocketeClass</receiver>
    <slot>menuOpenProjectClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>656</x>
+     <y>402</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionReload_project</sender>
+   <signal>triggered()</signal>
+   <receiver>rocketeClass</receiver>
+   <slot>menuReloadProjectClicked()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>-1</x>

@@ -11,6 +11,7 @@
 #include <QComboBox>
 #include <QApplication>
 #include <QMessageBox>
+#include <QClipboard>
 #include <QDebug>
 #include "AttributeTreeModel.h"
 #include "RocketSystem.h"
@@ -25,6 +26,8 @@
 #include "QDRuler.h"
 #include "LocalizationManagerInterface.h"
 #include "OpenedLuaScript.h"
+
+const int kTexturePreviewTabIndex = 1;
 
 void logMessageOutput( QtMsgType type, const char *msg );
 
@@ -205,6 +208,11 @@ Rockete::Rockete(QWidget *parent, Qt::WFlags flags)
     connect(triggerFind, SIGNAL(activated()), (QObject*)this, SLOT(findTriggered()));
 
     ui.searchReplaceDockWidget->hide();
+
+    // set initial tab:
+    ui.bottomTabWidget->setCurrentIndex(0);
+    ui.tabWidget->setCurrentIndex(0);
+    ui.tabWidget_2->setCurrentIndex(0);
 }
 
 Rockete::~Rockete()
@@ -405,6 +413,11 @@ void Rockete::menuSaveProjectClicked()
     }
     // reload project from new path:
     openProject(file_path.toUtf8().constData());
+}
+
+void Rockete::menuReloadProjectClicked()
+{
+
 }
 
 void Rockete::menuSaveClicked()
@@ -694,20 +707,23 @@ void Rockete::fileTreeDoubleClicked(QTreeWidgetItem *item, int /*column*/)
 
 void Rockete::fileTreeClicked(QTreeWidgetItem *item, int /*column*/)
 {
+    QClipboard *clipboard = QApplication::clipboard();
     if(item->text(1).endsWith("png")||item->text(1).endsWith("jpg")) // no native support for tga
     {
+        if (ui.tabWidget_2->currentIndex() != kTexturePreviewTabIndex) ui.texturePreviewLabel->updateGeometry(); // update size of preview if it is hidden
         QString data = item->data(1, Qt::UserRole).toString();
         if (data.length()) {
-            QImage image(item->data(0, Qt::UserRole).toString());
-            int l=0,b=0,w=0,h=0; int n = sscanf(data.toAscii().constData(), "%d,%d,%d,%d", &l, &b, &w, &h); if (n!=4)
-                qDebug() << "Invalid format: " << data;
+            QString texture = item->data(0, Qt::UserRole).toString();
+            QImage image(texture);
+            int l=0,b=0,w=0,h=0; int n = sscanf(data.toAscii().constData(), "%dpx %dpx %dpx %dpx", &l, &b, &w, &h); if (n!=4)
+                qWarning() << "Invalid format: " << data;
             QImage copy = image.copy( l, b, w, h);
-            copy.scaled(QSize(ui.texturePreviewLabel->width(),ui.texturePreviewLabel->height()),Qt::KeepAspectRatio);
             ui.texturePreviewLabel->setPixmap(QPixmap::fromImage(copy.scaled(QSize(ui.texturePreviewLabel->width(),ui.texturePreviewLabel->height()),Qt::KeepAspectRatio)));
+            clipboard->setText(QFileInfo(texture).fileName() + " " + data); // place texture coordinates
         } else {
-            QPixmap pixmap(getPathForFileName(item->text(1)));
-            pixmap.scaled(QSize(ui.texturePreviewLabel->width(),ui.texturePreviewLabel->height()),Qt::KeepAspectRatio);
-            ui.texturePreviewLabel->setPixmap(pixmap.scaled(QSize(ui.texturePreviewLabel->width(),ui.texturePreviewLabel->height()),Qt::KeepAspectRatio));
+            QPixmap pixmap = QPixmap(getPathForFileName(item->text(1))).scaled(QSize(ui.texturePreviewLabel->width(),ui.texturePreviewLabel->height()),Qt::KeepAspectRatio);
+            ui.texturePreviewLabel->setPixmap(pixmap);
+            clipboard->setText(item->text(1)); // place filename
         }
     }
 }
@@ -1231,7 +1247,7 @@ int Rockete::openFile(const QString &filePath)
     {
         ui.codeTabWidget->setCurrentIndex(new_tab_index);
         ui.codeTabWidget->setTabToolTip(new_tab_index, file_info.absoluteFilePath());
-        qInfo("adding path: %s\n", file_info.filePath().toAscii().data());
+        qInfo("adding file: %s\n", file_info.filePath().toAscii().data());
         fileWatcher->addPath(file_info.filePath());
         Settings::setMostRecentFile(file_info.filePath());
         generateMenuRecent();
@@ -1408,14 +1424,14 @@ void Rockete::generateMenuRecent()
 bool Rockete::readSpriteSheetInfo(QTreeWidgetItem *item, const QString &texture)
 {
     // 1. texpack catalog info:
-    bool valid;
+    bool valid_found;
     QImage image(texture);
     QFileInfo tinfo(texture);
     QString cat_filename = tinfo.absolutePath()+QDir::separator()+QString(tinfo.completeBaseName()+".cat");
     FILE *cat_file = fopen( cat_filename.toUtf8().data(), "r" );
     if (!cat_file)
         goto format2;
-    valid = false; while (!feof(cat_file)) {
+    valid_found = false; while (!feof(cat_file)) {
         int index;
         char tname[256];
         unsigned left;
@@ -1450,17 +1466,17 @@ bool Rockete::readSpriteSheetInfo(QTreeWidgetItem *item, const QString &texture)
                  /* 16 */ &bpp );
         if (pnum > 4) {
             QTreeWidgetItem *new_item = new QTreeWidgetItem(item);
-            QImage copy = image.copy( left, bottom, right-left, bottom-top);
+            QImage copy = image.copy( left, top, right-left, bottom-top);
             new_item->setIcon(0, QPixmap::fromImage(copy));
             new_item->setText(1, tname);
             new_item->setToolTip(1, QString("%1:%2").arg(QFileInfo(texture).fileName()).arg(tname));
-            QString data = QString("%1,%2,%3,%4").arg(left).arg(bottom).arg(right-left).arg(bottom-top);
+            QString data = QString("%1px %2px %3px %4px").arg(left).arg(top).arg(right-left).arg(bottom-top);
             new_item->setData(0, Qt::UserRole, texture);
             new_item->setData(1, Qt::UserRole, data);
-            valid = true;
+            valid_found = true;
         }
     };
-    if (valid) {
+    if (valid_found) {
         item->setIcon(0, QIcon(":/images/icon_atlas.png"));
         return true;
     }
@@ -1502,6 +1518,7 @@ bool Rockete::readSpriteSheetInfo(QTreeWidgetItem *item, const QString &texture)
     // </plist>
 format2:
     // 2. cocos2d plist info:
+    valid_found = false;
 
     // ;Sprite Monkey Coordinates, UTF-8
     // ;Transparency, Sprite Sheet Name, Image Width, Image Height
