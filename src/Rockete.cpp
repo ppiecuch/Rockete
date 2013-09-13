@@ -1,6 +1,7 @@
 #include "Rockete.h"
 
 #include <QTime>
+#include <QTemporaryFile>
 #include <QFileDialog>
 #include <QTextEdit>
 #include <QFileInfo>
@@ -94,9 +95,6 @@ void logMessageOutput( QtMsgType type, const char *msg )
 Rockete::Rockete(QWidget *parent, Qt::WFlags flags)
     : QMainWindow(parent, flags), isReloadingFile(false)
 {
-#ifdef Q_WS_MACX
-    setAttribute(Qt::WA_MacSmallSize);
-#endif
     qInstallMsgHandler( logMessageOutput );
 
     loadPlugins();
@@ -104,6 +102,16 @@ Rockete::Rockete(QWidget *parent, Qt::WFlags flags)
     instance = this;
 
     ui.setupUi(this);
+    if (!selectedTextureTmp.open())
+        qDebug() << "Failed to save image in temporary file.";
+
+#ifdef Q_WS_MACX
+    setAttribute(Qt::WA_MacSmallSize);
+    ui.labelCuttingDim->setAttribute(Qt::WA_MacSmallSize);
+    ui.labelCuttingDimLabel->setAttribute(Qt::WA_MacSmallSize);
+    ui.labelCuttingVCapLabel->setAttribute(Qt::WA_MacSmallSize);
+    ui.labelCuttingHCapLabel->setAttribute(Qt::WA_MacSmallSize);
+#endif
 
     ui.currentToolTab->setLayout(new QGridLayout());
 
@@ -207,12 +215,16 @@ Rockete::Rockete(QWidget *parent, Qt::WFlags flags)
     QShortcut *triggerFind = new QShortcut(QKeySequence::Find, this);
     connect(triggerFind, SIGNAL(activated()), (QObject*)this, SLOT(findTriggered()));
 
+    connect(ui.spinCuttingHCap, SIGNAL(valueChanged(int)), (QObject*)this, SLOT(spinCuttingChanged(int)));
+    connect(ui.spinCuttingVCap, SIGNAL(valueChanged(int)), (QObject*)this, SLOT(spinCuttingChanged(int)));
+
     ui.searchReplaceDockWidget->hide();
 
     // set initial tab:
     ui.bottomTabWidget->setCurrentIndex(0);
     ui.tabWidget->setCurrentIndex(0);
-    ui.tabWidget_2->setCurrentIndex(0);
+    ui.tabWidgetDoc->setCurrentIndex(0);
+    ui.tabWidgetCuttingPreview->setCurrentIndex(0);
 }
 
 Rockete::~Rockete()
@@ -710,20 +722,75 @@ void Rockete::fileTreeClicked(QTreeWidgetItem *item, int /*column*/)
     QClipboard *clipboard = QApplication::clipboard();
     if(item->text(1).endsWith("png")||item->text(1).endsWith("jpg")) // no native support for tga
     {
-        if (ui.tabWidget_2->currentIndex() != kTexturePreviewTabIndex) ui.texturePreviewLabel->updateGeometry(); // update size of preview if it is hidden
+        if (ui.tabWidgetDoc->currentIndex() != kTexturePreviewTabIndex) ui.texturePreviewLabel->updateGeometry(); // update size of preview if it is hidden
         QString data = item->data(1, Qt::UserRole).toString();
         if (data.length()) {
             QString texture = item->data(0, Qt::UserRole).toString();
             QImage image(texture);
             int l=0,b=0,w=0,h=0; int n = sscanf(data.toAscii().constData(), "%dpx %dpx %dpx %dpx", &l, &b, &w, &h); if (n!=4)
                 qWarning() << "Invalid format: " << data;
-            QImage copy = image.copy( l, b, w, h);
-            ui.texturePreviewLabel->setPixmap(QPixmap::fromImage(copy.scaled(QSize(ui.texturePreviewLabel->width(),ui.texturePreviewLabel->height()),Qt::KeepAspectRatio)));
-            clipboard->setText(QFileInfo(texture).fileName() + " " + data); // place texture coordinates
+            selectedTexture = image.copy( l, b, w, h);
+            ui.texturePreviewLabel->setPixmap(QPixmap::fromImage(selectedTexture.scaled(QSize(ui.texturePreviewLabel->width(),ui.texturePreviewLabel->height()),Qt::KeepAspectRatio)));
+            clipboard->setText(QFileInfo(texture).fileName() + " " + data); // place texture coordinates in clipboard
+            updateCuttingTab(QFileInfo(texture).fileName(), l, b, w, h);
         } else {
-            QPixmap pixmap = QPixmap(getPathForFileName(item->text(1))).scaled(QSize(ui.texturePreviewLabel->width(),ui.texturePreviewLabel->height()),Qt::KeepAspectRatio);
+            selectedTexture = QImage( getPathForFileName(item->text(1)) );
+            QPixmap pixmap = QPixmap::fromImage(selectedTexture.scaled(QSize(ui.texturePreviewLabel->width(),ui.texturePreviewLabel->height()),Qt::KeepAspectRatio));
             ui.texturePreviewLabel->setPixmap(pixmap);
             clipboard->setText(item->text(1)); // place filename
+            updateCuttingTab(item->text(1), 0, 0, selectedTexture.width(), selectedTexture.height());
+        }
+        selectedTexture.save(selectedTextureTmp.fileName(), "png");
+    }
+}
+
+void Rockete::updateCuttingTab(const QString &file, int l, int b, int w, int h)
+{
+    ui.labelCuttingDim->setText(QString("x:%1px y:%2px w:%3px h:%4px").arg(l).arg(b).arg(w).arg(h));
+    ui.cuttingLog->append(QString("<b>File selected %1</b><br/>").arg(file));
+    updateCuttingInfo(ui.spinCuttingHCap->value(), ui.spinCuttingVCap->value());
+}
+
+void Rockete::spinCuttingChanged(int value)
+{
+    updateCuttingInfo(ui.spinCuttingHCap->value(), ui.spinCuttingVCap->value());
+}
+
+void Rockete::updateCuttingInfo(int hvalue, int vvalue)
+{
+    int l, b, w, h;
+    int n = sscanf(ui.labelCuttingDim->text().toAscii().constData(), "x:%dpx y:%dpx w:%dpx h:%dpx", &l, &b, &w, &h); if (n!=4) {
+        ui.cuttingLog->append(QString("<font color=red>Invalid data format.</font color=red><br/>"));
+    } else {
+        if (vvalue != 0 || hvalue != 0) {
+            if (vvalue == 0) {
+                ui.cuttingLog->append(QString("<b><font color=blue>Cutting for h-cap %1px:</font></b><br/>").arg(hvalue));
+                ui.cuttingLog->append(QString("&nbsp;<b>left-image:</b> %1px %2 %3px %4px;<br/>").arg(l).arg(b).arg(l+hvalue).arg(b+h));
+                ui.cuttingLog->append(QString("&nbsp;<b>center-image:</b> %1px %2px %3 %4px;<br/>").arg(l+hvalue).arg(b).arg(l+w-hvalue).arg(b+h));
+                ui.cuttingLog->append(QString("&nbsp;<b>right-image:</b> %1px %2px %3 %4px;<br/>").arg(l+w-hvalue).arg(b).arg(l+w).arg(b+h));
+            } else if(hvalue == 0) {
+                ui.cuttingLog->append(QString("<b><font color=blue>Cutting for v-cap %1px:</font></b><br/>").arg(vvalue));
+                ui.cuttingLog->append(QString("&nbsp;<b>top-image:</b> %1px %2 %3px %4px;<br/>").arg(l).arg(b+h-vvalue).arg(l+w).arg(b+h));
+                ui.cuttingLog->append(QString("&nbsp;<b>center-image:</b> %1px %2px %3 %4px;<br/>").arg(l).arg(b+vvalue).arg(l+w).arg(b+h-vvalue));
+                ui.cuttingLog->append(QString("&nbsp;<b>bottom-image:</b> %1px %2px %3 %4px;<br/>").arg(l).arg(b).arg(l+w).arg(b+vvalue));
+            } else {
+                ui.cuttingLog->append(QString("<b><font color=blue>Cutting for cap %1px x %2px:</font></b><br/>").arg(hvalue).arg(vvalue));
+                ui.cuttingLog->append(QString("&nbsp;<b>top-left-image:</b> %1px %2 %3px %4px;<br/>").arg(l).arg(b).arg(l+hvalue).arg(b+h));
+                ui.cuttingLog->append(QString("&nbsp;<b>top-image:</b> %1px %2 %3px %4px;<br/>").arg(l+hvalue).arg(b).arg(l+w-hvalue).arg(b+h));
+                ui.cuttingLog->append(QString("&nbsp;<b>top-right-image:</b> %1px %2 %3px %4px;<br/>").arg(l+w-hvalue).arg(b).arg(l+w).arg(b+h));
+                ui.cuttingLog->append(QString("&nbsp;<b>left-image:</b> %1px %2 %3px %4px;<br/>").arg(l).arg(b).arg(l+hvalue).arg(b+h));
+                ui.cuttingLog->append(QString("&nbsp;<b>center-image:</b> %1px %2px %3 %4px;<br/>").arg(l+hvalue).arg(b).arg(l+w-hvalue).arg(b+h));
+                ui.cuttingLog->append(QString("&nbsp;<b>right-image:</b> %1px %2px %3 %4px;<br/>").arg(l+w-hvalue).arg(b).arg(l+w).arg(b+h));
+                ui.cuttingLog->append(QString("&nbsp;<b>bottom-left-image:</b> %1px %2 %3px %4px;<br/>").arg(l).arg(b).arg(l+hvalue).arg(b+h));
+                ui.cuttingLog->append(QString("&nbsp;<b>bottom-image:</b> %1px %2 %3px %4px;<br/>").arg(l+hvalue).arg(b).arg(l+w-hvalue).arg(b+h));
+                ui.cuttingLog->append(QString("&nbsp;<b>bottom-right-image:</b> %1px %2 %3px %4px;<br/>").arg(l+w-hvalue).arg(b).arg(l+w).arg(b+h));
+            }
+        }
+        if (selectedTextureTmp.isOpen()) {
+            ui.labelCuttingPreview->setStyleSheet(QString(
+                "border-width: 8px;"
+                "border-image: url('%1') %2 %2 %3 %3;").arg(selectedTextureTmp.fileName()).arg(hvalue).arg(vvalue)
+                );
         }
     }
 }

@@ -4,6 +4,7 @@
 #include <QtGui/QMainWindow>
 #include <QFileSystemWatcher>
 #include <QLabel>
+#include <QTemporaryFile>
 #include "WizardButton.h"
 #include "ui_rockete.h"
 #include "RenderingView.h"
@@ -86,6 +87,7 @@ public slots:
     void addSnippetClicked();
     void removeSnippetClicked();
     void snippetsListDoubleClicked(QListWidgetItem *item);
+    void spinCuttingChanged(int value);
 
 protected:
     virtual void keyPressEvent(QKeyEvent *event);
@@ -106,6 +108,8 @@ private:
     void loadPlugins();
     void closeTab(int index, bool must_save = true);
     void addRulers();
+    void updateCuttingTab(const QString &file, int l, int b, int w, int h);
+    void updateCuttingInfo(int hvalue, int vvalue);
 
     Ui::rocketeClass ui;
     RenderingView *renderingView;
@@ -122,6 +126,8 @@ private:
     QTreeWidgetItem *selectedTreeViewItem;
     DocumentHierarchyEventFilter *hierarchyEventFilter;
     QDRuler *horzRuler, *vertRuler;
+    QImage selectedTexture;
+    QTemporaryFile selectedTextureTmp;
 
 public:
     static Rockete *instance;
