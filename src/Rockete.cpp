@@ -8,6 +8,7 @@
 #include <QInputDialog>
 #include <QTextDocument>
 #include <QGridLayout>
+#include <QStackedLayout>
 #include <QColorDialog>
 #include <QComboBox>
 #include <QApplication>
@@ -25,10 +26,12 @@
 #include "ProjectManager.h"
 #include <QPluginLoader>
 #include "QDRuler.h"
+#include "QDLabel.h"
 #include "LocalizationManagerInterface.h"
 #include "OpenedLuaScript.h"
 
 const int kTexturePreviewTabIndex = 1;
+const int kCuttingImagePreviewTabIndex = 1;
 
 void logMessageOutput( QtMsgType type, const char *msg );
 
@@ -111,6 +114,8 @@ Rockete::Rockete(QWidget *parent, Qt::WFlags flags)
     ui.labelCuttingDimLabel->setAttribute(Qt::WA_MacSmallSize);
     ui.labelCuttingVCapLabel->setAttribute(Qt::WA_MacSmallSize);
     ui.labelCuttingHCapLabel->setAttribute(Qt::WA_MacSmallSize);
+    ui.labelCuttingMask->setAttribute(Qt::WA_MacSmallSize);
+    ui.checkBoxCuttingMask->setAttribute(Qt::WA_MacSmallSize);
 #endif
 
     ui.currentToolTab->setLayout(new QGridLayout());
@@ -215,8 +220,21 @@ Rockete::Rockete(QWidget *parent, Qt::WFlags flags)
     QShortcut *triggerFind = new QShortcut(QKeySequence::Find, this);
     connect(triggerFind, SIGNAL(activated()), (QObject*)this, SLOT(findTriggered()));
 
+    // texture preview:
+    connect(ui.texturePreviewLabel, SIGNAL(resizeLabel(QResizeEvent*)), (QObject*)this, SLOT(resizeTexturePreview(QResizeEvent*)));
+
+    // cutting panel:
+    labelCuttingMask = new QLabel(ui.tabWidgetCuttingPreview);
+    const QPoint origin = ui.tabImage->mapTo(ui.tabWidgetCuttingPreview, ui.labelCuttingPreview->geometry().topLeft());
+    labelCuttingMask->setGeometry(origin.x(), origin.y(), ui.labelCuttingPreview->geometry().width(), ui.labelCuttingPreview->geometry().height());
+    connect(ui.labelCuttingPreview, SIGNAL(resizeLabel(QResizeEvent*)), (QObject*)this, SLOT(resizeCuttingPreview(QResizeEvent*)));
     connect(ui.spinCuttingHCap, SIGNAL(valueChanged(int)), (QObject*)this, SLOT(spinCuttingChanged(int)));
     connect(ui.spinCuttingVCap, SIGNAL(valueChanged(int)), (QObject*)this, SLOT(spinCuttingChanged(int)));
+    connect(ui.tabWidgetCuttingPreview, SIGNAL(currentChanged(int)), (QObject*)this, SLOT(cuttingPreviewTabChange(int)));
+
+    // mask alpha:
+    connect(ui.horizontalCuttingPreviewSize, SIGNAL(valueChanged(int)), (QObject*)this, SLOT(cuttingPrevSizeChanged(int)));
+    connect(ui.checkBoxCuttingMask, SIGNAL(toggled(bool)), this, SLOT(cuttingMaskToggle(bool)));
 
     ui.searchReplaceDockWidget->hide();
 
@@ -231,6 +249,7 @@ Rockete::~Rockete()
 {
     delete attributeTreeModel;
     delete propertyTreeModel;
+    delete labelCuttingMask;
 }
 
 void Rockete::repaintRenderingView()
@@ -730,17 +749,24 @@ void Rockete::fileTreeClicked(QTreeWidgetItem *item, int /*column*/)
             int l=0,b=0,w=0,h=0; int n = sscanf(data.toAscii().constData(), "%dpx %dpx %dpx %dpx", &l, &b, &w, &h); if (n!=4)
                 qWarning() << "Invalid format: " << data;
             selectedTexture = image.copy( l, b, w, h);
+            selectedTexture.save(selectedTextureTmp.fileName(), "png");
             ui.texturePreviewLabel->setPixmap(QPixmap::fromImage(selectedTexture.scaled(QSize(ui.texturePreviewLabel->width(),ui.texturePreviewLabel->height()),Qt::KeepAspectRatio)));
             clipboard->setText(QFileInfo(texture).fileName() + " " + data); // place texture coordinates in clipboard
             updateCuttingTab(QFileInfo(texture).fileName(), l, b, w, h);
         } else {
             selectedTexture = QImage( getPathForFileName(item->text(1)) );
-            QPixmap pixmap = QPixmap::fromImage(selectedTexture.scaled(QSize(ui.texturePreviewLabel->width(),ui.texturePreviewLabel->height()),Qt::KeepAspectRatio));
-            ui.texturePreviewLabel->setPixmap(pixmap);
+            selectedTexture.save(selectedTextureTmp.fileName(), "png");
+            ui.texturePreviewLabel->setPixmap(QPixmap::fromImage(selectedTexture.scaled(QSize(ui.texturePreviewLabel->width(),ui.texturePreviewLabel->height()),Qt::KeepAspectRatio)));
             clipboard->setText(item->text(1)); // place filename
             updateCuttingTab(item->text(1), 0, 0, selectedTexture.width(), selectedTexture.height());
         }
-        selectedTexture.save(selectedTextureTmp.fileName(), "png");
+    }
+}
+
+void Rockete::resizeTexturePreview(QResizeEvent * event)
+{
+    if (!selectedTexture.isNull()) {
+        ui.texturePreviewLabel->setPixmap(QPixmap::fromImage(selectedTexture.scaled(QSize(ui.texturePreviewLabel->width(),ui.texturePreviewLabel->height()),Qt::KeepAspectRatio)));
     }
 }
 
@@ -785,14 +811,71 @@ void Rockete::updateCuttingInfo(int hvalue, int vvalue)
                 ui.cuttingLog->append(QString("&nbsp;<b>bottom-image:</b> %1px %2 %3px %4px;<br/>").arg(l+hvalue).arg(b).arg(l+w-hvalue).arg(b+h));
                 ui.cuttingLog->append(QString("&nbsp;<b>bottom-right-image:</b> %1px %2 %3px %4px;<br/>").arg(l+w-hvalue).arg(b).arg(l+w).arg(b+h));
             }
-        }
-        if (selectedTextureTmp.isOpen()) {
-            ui.labelCuttingPreview->setStyleSheet(QString(
-                "border-width: 8px;"
-                "border-image: url('%1') %2 %2 %3 %3;").arg(selectedTextureTmp.fileName()).arg(hvalue).arg(vvalue)
-                );
+            if (selectedTextureTmp.isOpen()) {
+                labelCuttingMask->setStyleSheet(QString(
+                    "border-width: %3px %2px %3px %2px;"
+                    "border-image: url(':/images/border-image.png') 10 10 10 10 stretch stretch;").arg(hvalue).arg(vvalue) /* top, right, bottom, left */
+                    );
+                ui.labelCuttingPreview->setStyleSheet(QString(
+                    "border-width: %3px %2px %3px %2px;"
+                    "border-image: url('%1') %3 %2 %3 %2 stretch stretch;").arg(selectedTextureTmp.fileName()).arg(hvalue).arg(vvalue) /* top, right, bottom, left */
+                    );
+                float aspect = (float)w/(float)h;
+                if (h>w) {
+                    // disable vertical spacers:
+                    ui.verticalSpacer1->changeSize(0, 0, QSizePolicy::Ignored, QSizePolicy::Ignored);
+                    ui.verticalSpacer2->changeSize(0, 0, QSizePolicy::Ignored, QSizePolicy::Ignored);
+                    // enable horizontal spacers:
+                    ui.horizontalSpacer1->changeSize(10, 10, QSizePolicy::Expanding, QSizePolicy::Expanding);
+                    ui.horizontalSpacer2->changeSize(10, 10, QSizePolicy::Expanding, QSizePolicy::Expanding);
+                    // --
+                } else {
+                    // disable horizontal spacers:
+                    ui.horizontalSpacer1->changeSize(0, 0, QSizePolicy::Ignored, QSizePolicy::Ignored);
+                    ui.horizontalSpacer2->changeSize(0, 0, QSizePolicy::Ignored, QSizePolicy::Ignored);
+                    // enable vertical spacers:
+                    ui.verticalSpacer1->changeSize(10, 10, QSizePolicy::Expanding, QSizePolicy::Expanding);
+                    ui.verticalSpacer2->changeSize(10, 10, QSizePolicy::Expanding, QSizePolicy::Expanding);
+                    // --
+                }
+            }
+        } else {
+            ui.labelCuttingPreview->setStyleSheet("");
+            labelCuttingMask->setStyleSheet("");
         }
     }
+}
+
+void Rockete::resizeCuttingPreview(QResizeEvent * event)
+{
+    // resize mask view:
+    //labelCuttingMask->setGeometry(ui.labelCuttingPreview->geometry());
+    const QPoint origin = ui.tabImage->mapTo(ui.tabWidgetCuttingPreview, ui.labelCuttingPreview->geometry().topLeft());
+    labelCuttingMask->setGeometry(origin.x(), origin.y(), ui.labelCuttingPreview->geometry().width(), ui.labelCuttingPreview->geometry().height());
+}
+
+void Rockete::cuttingPrevSizeChanged(int value)
+{
+}
+
+void Rockete::cuttingMaskToggle(bool value)
+{
+    if (value)
+        labelCuttingMask->show();
+    else
+        labelCuttingMask->hide();
+}
+
+void Rockete::cuttingPreviewTabChange(int tab)
+{
+    // workaround for problem with mask's transparency
+    if (tab == kCuttingImagePreviewTabIndex) {
+        if (ui.checkBoxCuttingMask->checkState() == Qt::Unchecked)
+            labelCuttingMask->hide();
+        else
+            labelCuttingMask->show();
+    } else
+        labelCuttingMask->hide();
 }
 
 void Rockete::documentHierarchyDoubleClicked(QTreeWidgetItem *item, int/* column*/)

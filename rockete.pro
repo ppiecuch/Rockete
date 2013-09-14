@@ -71,6 +71,7 @@ HEADERS += \
  ./src/OpenGL.h \
  ./src/GLGrid.h \
  ./src/QDRuler.h \
+ ./src/QDLabel.h \
  ./src/ProjectManager.h \
  ./src/PropertyTreeModel.h \
  ./src/RenderingView.h \

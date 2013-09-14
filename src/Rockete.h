@@ -14,8 +14,9 @@
 #include "PropertyTreeModel.h"
 #include "DocumentHierarchyEventFilter.h"
 
-
 class QDRuler;
+class QDLabel;
+
 class Rockete : public QMainWindow
 {
     Q_OBJECT
@@ -87,7 +88,12 @@ public slots:
     void addSnippetClicked();
     void removeSnippetClicked();
     void snippetsListDoubleClicked(QListWidgetItem *item);
+    void resizeTexturePreview(QResizeEvent * event);
+    void resizeCuttingPreview(QResizeEvent * event);
     void spinCuttingChanged(int value);
+    void cuttingPrevSizeChanged(int value);
+    void cuttingMaskToggle(bool value);
+    void cuttingPreviewTabChange(int tab);
 
 protected:
     virtual void keyPressEvent(QKeyEvent *event);
@@ -118,7 +124,7 @@ private:
     QList<QAction*> recentFileActionList;
     QComboBox *searchBox;
     QComboBox *languageBox;
-    QLabel *labelZoom, *labelPos;
+    QLabel *labelZoom, *labelPos, *labelCuttingMask;
     QFileSystemWatcher *fileWatcher;
     bool isReloadingFile;
     QMap<int, QString> fileChangedOutsideArray;

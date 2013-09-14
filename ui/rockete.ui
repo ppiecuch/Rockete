@@ -101,7 +101,7 @@
             <enum>QTabWidget::Triangular</enum>
            </property>
            <property name="currentIndex">
-            <number>1</number>
+            <number>0</number>
            </property>
            <property name="tabsClosable">
             <bool>false</bool>
@@ -379,7 +379,7 @@ p, li { white-space: pre-wrap; }
          </attribute>
          <layout class="QVBoxLayout" name="verticalLayout">
           <item>
-           <widget class="QLabel" name="texturePreviewLabel">
+           <widget class="QDLabel" name="texturePreviewLabel">
             <property name="minimumSize">
              <size>
               <width>1</width>
@@ -523,6 +523,10 @@ p, li { white-space: pre-wrap; }
              </layout>
             </widget>
             <widget class="QWidget" name="tabImage">
+             <property name="styleSheet">
+              <string notr="true"> background-image: url(:/images/grid.png);
+ background-repeat: repeat-xy;</string>
+             </property>
              <attribute name="title">
               <string>Image</string>
              </attribute>
@@ -531,26 +535,131 @@ p, li { white-space: pre-wrap; }
                <number>16</number>
               </property>
               <property name="topMargin">
-               <number>10</number>
+               <number>4</number>
               </property>
               <property name="rightMargin">
                <number>16</number>
               </property>
               <property name="bottomMargin">
-               <number>10</number>
+               <number>1</number>
               </property>
-              <item row="0" column="0">
-               <widget class="QLabel" name="labelCuttingPreview">
-                <property name="frameShape">
-                 <enum>QFrame::Box</enum>
+              <item row="0" column="1">
+               <spacer name="verticalSpacer1">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
                 </property>
-                <property name="frameShadow">
-                 <enum>QFrame::Plain</enum>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>35</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item row="1" column="0">
+               <spacer name="horizontalSpacer1">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeType">
+                 <enum>QSizePolicy::Expanding</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item row="1" column="1">
+               <widget class="QDLabel" name="labelCuttingPreview">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>0</height>
+                 </size>
                 </property>
                 <property name="text">
                  <string/>
                 </property>
                </widget>
+              </item>
+              <item row="1" column="2">
+               <spacer name="horizontalSpacer2">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeType">
+                 <enum>QSizePolicy::Expanding</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>70</width>
+                  <height>17</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item row="2" column="1">
+               <spacer name="verticalSpacer2">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>35</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item row="3" column="0" colspan="3">
+               <layout class="QHBoxLayout" name="horizontalLayout_8">
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_7">
+                  <item>
+                   <widget class="QLabel" name="labelCuttingMask">
+                    <property name="text">
+                     <string>Size:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QSlider" name="horizontalCuttingPreviewSize">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="tickPosition">
+                     <enum>QSlider::TicksBothSides</enum>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <widget class="QCheckBox" name="checkBoxCuttingMask">
+                  <property name="text">
+                   <string>Mask</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
               </item>
              </layout>
             </widget>
@@ -1047,6 +1156,11 @@ p, li { white-space: pre-wrap; }
    <class>SnippetsManager</class>
    <extends>QWidget</extends>
    <header>SnippetsManager.h</header>
+  </customwidget>
+  <customwidget>
+   <class>QDLabel</class>
+   <extends>QLabel</extends>
+   <header>QDLabel.h</header>
   </customwidget>
  </customwidgets>
  <resources>

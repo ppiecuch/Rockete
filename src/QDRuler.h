@@ -8,9 +8,9 @@ class QDRuler : public QWidget
 {
     Q_OBJECT
     Q_ENUMS(RulerType)
-            Q_PROPERTY(qreal origin READ origin WRITE setOrigin)
-            Q_PROPERTY(qreal rulerUnit READ rulerUnit WRITE setRulerUnit)
-            Q_PROPERTY(qreal rulerZoom READ rulerZoom WRITE setRulerZoom)
+    Q_PROPERTY(qreal origin READ origin WRITE setOrigin)
+    Q_PROPERTY(qreal rulerUnit READ rulerUnit WRITE setRulerUnit)
+    Q_PROPERTY(qreal rulerZoom READ rulerZoom WRITE setRulerZoom)
 
 public:
     enum RulerType { Horizontal, Vertical };

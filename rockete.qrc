@@ -27,5 +27,6 @@
         <file>images/icon_fnt.png</file>
         <file>images/reload.png</file>
         <file>images/grid.png</file>
+        <file>images/border-image.png</file>
     </qresource>
 </RCC>
