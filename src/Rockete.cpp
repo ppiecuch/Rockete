@@ -67,7 +67,7 @@ void logMessageOutput( QtMsgType type, const char *msg )
         Rockete *mw = Rockete::instance;
 
 #if defined(Q_CC_MSVC) || defined(Q_CC_MSVC_NET)
-        OutputDebugString( (sMsg + "\n"). ucs2() );
+        OutputDebugString( (sMsg + "\n"). unicode() );
 #endif
 
         QTextDocument text; text.setPlainText(sMsg); sMsg = text.toHtml(); // make special chars printable in html
@@ -762,8 +762,8 @@ void Rockete::fileTreeClicked(QTreeWidgetItem *item, int /*column*/)
             selectedTexture = image.copy( l, b, w, h);
             selectedTexture.save(selectedTextureTmp.fileName(), "png");
             ui.texturePreviewLabel->setPixmap(QPixmap::fromImage(selectedTexture.scaled(QSize(ui.texturePreviewLabel->width(),ui.texturePreviewLabel->height()),Qt::KeepAspectRatio)));
-            clipboard->setText(QFileInfo(texture).fileName() + " " + data); // place texture coordinates in clipboard
-            updateCuttingTab(QFileInfo(texture).fileName(), l, b, w, h);
+            clipboard->setText(QFileInfo(texture).fileName() + " " + QString("%1px %2px %3px %4px").arg(l).arg(b).arg(l+w).arg(b+h)); // place texture coordinates in clipboard
+            updateCuttingTab(QFileInfo(texture).fileName(), l, b, w, h); // flip y for bottom-left origin
         } else {
             selectedTexture = QImage( getPathForFileName(item->text(1)) );
             selectedTexture.save(selectedTextureTmp.fileName(), "png");
@@ -784,7 +784,8 @@ void Rockete::resizeTexturePreview(QResizeEvent * event)
 void Rockete::updateCuttingTab(const QString &file, int l, int b, int w, int h)
 {
     ui.labelCuttingDim->setText(QString("x:%1px y:%2px w:%3px h:%4px").arg(l).arg(b).arg(w).arg(h));
-    ui.cuttingLog->append(QString("<b>File selected %1</b><br/>").arg(file));
+    ui.labelCuttingDim->setProperty("texture file", file);
+    ui.cuttingLog->append(QString("<b><font color=blue>File selected %1</font></b><br/>").arg(file));
     updateCuttingInfo(ui.spinCuttingLeftCap->value(), ui.spinCuttingTopCap->value(), ui.spinCuttingRightCap->value(), ui.spinCuttingBottomCap->value());
     // setup max values for sliders:
     ui.spinCuttingLeftCap->setMaximum(floor(w/2.));
@@ -805,33 +806,34 @@ void Rockete::updateCuttingInfo(int lvalue, int tvalue, int rvalue, int bvalue)
         ui.cuttingLog->append(QString("<font color=red>Invalid data format.</font color=red><br/>"));
     } else {
         if (lvalue != 0 || tvalue != 0 || rvalue != 0 || bvalue != 0) {
+            const QString file =  ui.labelCuttingDim->property("texture file").toString();
             if (tvalue == 0 && bvalue == 0) {
                 if (lvalue == rvalue)
                     ui.cuttingLog->append(QString("<b><font color=blue>Cutting for h-cap %1px:</font></b><br/>").arg(lvalue));
                 else
-                    ui.cuttingLog->append(QString("<b><font color=blue>Cutting for h-cap %1px|%1px:</font></b><br/>").arg(lvalue).arg(rvalue));
-                ui.cuttingLog->append(QString("&nbsp;<b>left-image:</b> %1px %2 %3px %4px;<br/>").arg(l).arg(b).arg(l+lvalue).arg(b+h));
-                ui.cuttingLog->append(QString("&nbsp;<b>center-image:</b> %1px %2px %3 %4px;<br/>").arg(l+lvalue).arg(b).arg(l+w-rvalue).arg(b+h));
-                ui.cuttingLog->append(QString("&nbsp;<b>right-image:</b> %1px %2px %3 %4px;<br/>").arg(l+w-rvalue).arg(b).arg(l+w).arg(b+h));
+                    ui.cuttingLog->append(QString("<b><font color=blue>Cutting for h-cap %1px|%2px:</font></b><br/>").arg(lvalue).arg(rvalue));
+                ui.cuttingLog->append(QString("&nbsp;<b>left-image:</b> %1 %2px %3 %4px %5px;<br/>").arg(file).arg(l).arg(b).arg(l+lvalue).arg(b+h));
+                ui.cuttingLog->append(QString("&nbsp;<b>center-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l+lvalue).arg(b).arg(l+w-rvalue).arg(b+h));
+                ui.cuttingLog->append(QString("&nbsp;<b>right-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l+w-rvalue).arg(b).arg(l+w).arg(b+h));
             } else if(lvalue == 0 && tvalue == 0) {
                 if (tvalue == bvalue)
                     ui.cuttingLog->append(QString("<b><font color=blue>Cutting for v-cap %1px:</font></b><br/>").arg(bvalue));
                 else
-                    ui.cuttingLog->append(QString("<b><font color=blue>Cutting for v-cap %1px|%1px:</font></b><br/>").arg(tvalue).arg(bvalue));
-                ui.cuttingLog->append(QString("&nbsp;<b>top-image:</b> %1px %2 %3px %4px;<br/>").arg(l).arg(b+h-tvalue).arg(l+w).arg(b+h));
-                ui.cuttingLog->append(QString("&nbsp;<b>center-image:</b> %1px %2px %3 %4px;<br/>").arg(l).arg(b+bvalue).arg(l+w).arg(b+h-tvalue));
-                ui.cuttingLog->append(QString("&nbsp;<b>bottom-image:</b> %1px %2px %3 %4px;<br/>").arg(l).arg(b).arg(l+w).arg(b+bvalue));
+                    ui.cuttingLog->append(QString("<b><font color=blue>Cutting for v-cap %1px|%2px:</font></b><br/>").arg(tvalue).arg(bvalue));
+                ui.cuttingLog->append(QString("<b>background-bottom-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l).arg(b+h-tvalue).arg(l+w).arg(b+h));
+                ui.cuttingLog->append(QString("<b>background-bottom-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l).arg(b+bvalue).arg(l+w).arg(b+h-tvalue));
+                ui.cuttingLog->append(QString("<b>background-bottom-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l).arg(b).arg(l+w).arg(b+bvalue));
             } else {
-                ui.cuttingLog->append(QString("<b><font color=blue>Cutting for cap h:%1px|%2px v:%1px|%2px:</font></b><br/>").arg(lvalue).arg(rvalue).arg(bvalue).arg(tvalue));
-                ui.cuttingLog->append(QString("&nbsp;<b>top-left-image:</b> %1px %2 %3px %4px;<br/>").arg(l).arg(b).arg(l+lvalue).arg(b+h));
-                ui.cuttingLog->append(QString("&nbsp;<b>top-image:</b> %1px %2 %3px %4px;<br/>").arg(l+lvalue).arg(b).arg(l+w-rvalue).arg(b+h));
-                ui.cuttingLog->append(QString("&nbsp;<b>top-right-image:</b> %1px %2 %3px %4px;<br/>").arg(l+w-rvalue).arg(b).arg(l+w).arg(b+h));
-                ui.cuttingLog->append(QString("&nbsp;<b>left-image:</b> %1px %2 %3px %4px;<br/>").arg(l).arg(b).arg(l+lvalue).arg(b+h));
-                ui.cuttingLog->append(QString("&nbsp;<b>center-image:</b> %1px %2px %3 %4px;<br/>").arg(l+lvalue).arg(b).arg(l+w-rvalue).arg(b+h));
-                ui.cuttingLog->append(QString("&nbsp;<b>right-image:</b> %1px %2px %3 %4px;<br/>").arg(l+w-rvalue).arg(b).arg(l+w).arg(b+h));
-                ui.cuttingLog->append(QString("&nbsp;<b>bottom-left-image:</b> %1px %2 %3px %4px;<br/>").arg(l).arg(b).arg(l+lvalue).arg(b+h));
-                ui.cuttingLog->append(QString("&nbsp;<b>bottom-image:</b> %1px %2 %3px %4px;<br/>").arg(l+lvalue).arg(b).arg(l+w-rvalue).arg(b+h));
-                ui.cuttingLog->append(QString("&nbsp;<b>bottom-right-image:</b> %1px %2 %3px %4px;<br/>").arg(l+w-rvalue).arg(b).arg(l+w).arg(b+h));
+                ui.cuttingLog->append(QString("<b><font color=blue>Cutting for cap h:%1px|%2px v:%3px|%4px:</font></b><br/>").arg(lvalue).arg(rvalue).arg(bvalue).arg(tvalue));
+                ui.cuttingLog->append(QString("<b>background-top-left-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l).arg(b+h-rvalue).arg(l+lvalue).arg(b+h));
+                ui.cuttingLog->append(QString("<b>background-top-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l+lvalue).arg(b+h-rvalue).arg(l+w-rvalue).arg(b+h));
+                ui.cuttingLog->append(QString("<b>background-top-right-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l+w-rvalue).arg(b+h-rvalue).arg(l+w).arg(b+h));
+                ui.cuttingLog->append(QString("<b>background-left-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l).arg(b+bvalue).arg(l+lvalue).arg(b+h-tvalue));
+                ui.cuttingLog->append(QString("<b>background-center-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l+lvalue).arg(b+bvalue).arg(l+w-rvalue).arg(b+h-tvalue));
+                ui.cuttingLog->append(QString("<b>background-right-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l+w-rvalue).arg(b+bvalue).arg(l+w).arg(b+h-tvalue));
+                ui.cuttingLog->append(QString("<b>background-top-left-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l).arg(b).arg(l+lvalue).arg(b+bvalue));
+                ui.cuttingLog->append(QString("<b>background-top-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l+lvalue).arg(b).arg(l+w-rvalue).arg(b+bvalue));
+                ui.cuttingLog->append(QString("<b>background-top-right-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l+w-rvalue).arg(b).arg(l+w).arg(b+bvalue));
             }
             if (selectedTextureTmp.isOpen()) {
                 labelCuttingMask->setStyleSheet(QString(

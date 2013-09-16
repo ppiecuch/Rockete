@@ -142,15 +142,27 @@ public:
     static Rockete *instance;
 };
 
-#define f_ssprintf(...)                                 \
+#if defined(Q_CC_MSVC) || defined(Q_CC_MSVC_NET)
+# define f_ssprintf(x, ...)                            \
+   int _ss_size = _snprintf(0, 0, ##__VA_ARGS__);      \
+   char *_ss_ret = (char*)alloca(_ss_size+1);          \
+   _snprintf(_ss_ret, _ss_size+1, ##__VA_ARGS__);      \
+   QString x = _ss_ret;
+
+# define qInfo(...) { int _ss_size = _snprintf(0, 0, ##__VA_ARGS__);    \
+    char *_ss_ret = (char*)alloca(_ss_size+1);                          \
+    _snprintf(_ss_ret, _ss_size+1, ##__VA_ARGS__);                      \
+    Rockete::instance->logMessage(_ss_ret); }
+#else
+# define f_ssprintf(...)                                \
     ({ int _ss_size = snprintf(0, 0, ##__VA_ARGS__);    \
     char *_ss_ret = (char*)alloca(_ss_size+1);          \
     snprintf(_ss_ret, _ss_size+1, ##__VA_ARGS__);       \
     _ss_ret; })
 
-#define qInfo(...) { const char *b = ({ int _ss_size = snprintf(0, 0, ##__VA_ARGS__);   \
+# define qInfo(...) { const char *b = ({ int _ss_size = snprintf(0, 0, ##__VA_ARGS__);  \
     char *_ss_ret = (char*)alloca(_ss_size+1);                                          \
     snprintf(_ss_ret, _ss_size+1, ##__VA_ARGS__);                                       \
     _ss_ret; }); Rockete::instance->logMessage(b); }
-
+#endif
 #endif // ROCKETE_H
