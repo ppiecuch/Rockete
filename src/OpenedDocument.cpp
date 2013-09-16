@@ -133,8 +133,7 @@ void OpenedDocument::populateHierarchyTreeView(QTreeWidget *tree)
 
 QTreeWidgetItem *OpenedDocument::getChildrenTree(QTreeWidgetItem *parent, Element *element)
 {
-    QStringList
-        list;
+    QStringList list;
     list << element->GetTagName().CString();
     list << element->GetId().CString();
     list << element->GetClassNames().CString();

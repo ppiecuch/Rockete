@@ -35,7 +35,7 @@ ProjectManager::~ProjectManager()
 {
 }
 
-void ProjectManager::Initialize(const QString &filename)
+bool ProjectManager::Initialize(const QString &filename)
 {
     qDebug() << "Initialize project manager at: " << filename;
 
@@ -44,21 +44,21 @@ void ProjectManager::Initialize(const QString &filename)
 
     QDomDocument domDocument;
 
-    fontPaths.clear();
-    texturePaths.clear();
-    interfacePaths.clear();
-
     if (QFile::exists(filename)) {
         if (!file.open(QIODevice::ReadOnly))
-            return;
+            return false;
         QString errmsg; int errcol, errrow;
         if (!domDocument.setContent(file.readAll(), &errmsg, &errrow, &errcol)) {
             file.close();
             qDebug() << "Error parsing project: " << errmsg << ": line" << errrow << ",column" << errcol;
-            return;
+            return false;
         }
         file.close();
     }
+
+    fontPaths.clear();
+    texturePaths.clear();
+    interfacePaths.clear();
 
     projectName = file_info.baseName();
 
@@ -246,6 +246,8 @@ void ProjectManager::Initialize(const QString &filename)
     CFRelease(appUrlRef);
     CFRelease(macPath);
 #endif
+
+    return true;
 }
 
 static void _saveQStringList(QXmlStreamWriter &xmlWriter, const QString &sec, const QStringList &list)

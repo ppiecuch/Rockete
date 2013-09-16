@@ -15,7 +15,7 @@ public:
         return instance;
     }
 
-    void Initialize(const QString &filename);
+    bool Initialize(const QString &filename);
     void Serialize(const QString &filename);
 
     const QStringList &getFontPaths(){return fontPaths;}

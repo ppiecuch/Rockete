@@ -115,7 +115,7 @@ private:
     void closeTab(int index, bool must_save = true);
     void addRulers();
     void updateCuttingTab(const QString &file, int l, int b, int w, int h);
-    void updateCuttingInfo(int hvalue, int vvalue);
+    void updateCuttingInfo(int lvalue, int tvalue, int rvalue, int bvalue);
 
     Ui::rocketeClass ui;
     RenderingView *renderingView;
@@ -132,8 +132,11 @@ private:
     QTreeWidgetItem *selectedTreeViewItem;
     DocumentHierarchyEventFilter *hierarchyEventFilter;
     QDRuler *horzRuler, *vertRuler;
+    // selected texture image/subimage:
     QImage selectedTexture;
     QTemporaryFile selectedTextureTmp;
+    // opened project file
+    QString projectFile;
 
 public:
     static Rockete *instance;

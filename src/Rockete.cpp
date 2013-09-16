@@ -1,5 +1,6 @@
 #include "Rockete.h"
 
+#include <math.h>
 #include <QTime>
 #include <QTemporaryFile>
 #include <QFileDialog>
@@ -112,10 +113,14 @@ Rockete::Rockete(QWidget *parent, Qt::WFlags flags)
     setAttribute(Qt::WA_MacSmallSize);
     ui.labelCuttingDim->setAttribute(Qt::WA_MacSmallSize);
     ui.labelCuttingDimLabel->setAttribute(Qt::WA_MacSmallSize);
-    ui.labelCuttingVCapLabel->setAttribute(Qt::WA_MacSmallSize);
-    ui.labelCuttingHCapLabel->setAttribute(Qt::WA_MacSmallSize);
+    ui.labelCuttingTopCapLabel->setAttribute(Qt::WA_MacSmallSize);
+    ui.labelCuttingLeftCapLabel->setAttribute(Qt::WA_MacSmallSize);
+    ui.labelCuttingBottomCapLabel->setAttribute(Qt::WA_MacSmallSize);
+    ui.labelCuttingRightCapLabel->setAttribute(Qt::WA_MacSmallSize);
     ui.labelCuttingMask->setAttribute(Qt::WA_MacSmallSize);
     ui.checkBoxCuttingMask->setAttribute(Qt::WA_MacSmallSize);
+    ui.documentHierarchyTreeWidget->setAttribute(Qt::WA_MacSmallSize);
+    ui.documentHierarchyTreeWidget->setIndentation(15); // ui 10 is too small for osx
 #endif
 
     ui.currentToolTab->setLayout(new QGridLayout());
@@ -228,8 +233,10 @@ Rockete::Rockete(QWidget *parent, Qt::WFlags flags)
     const QPoint origin = ui.tabImage->mapTo(ui.tabWidgetCuttingPreview, ui.labelCuttingPreview->geometry().topLeft());
     labelCuttingMask->setGeometry(origin.x(), origin.y(), ui.labelCuttingPreview->geometry().width(), ui.labelCuttingPreview->geometry().height());
     connect(ui.labelCuttingPreview, SIGNAL(resizeLabel(QResizeEvent*)), (QObject*)this, SLOT(resizeCuttingPreview(QResizeEvent*)));
-    connect(ui.spinCuttingHCap, SIGNAL(valueChanged(int)), (QObject*)this, SLOT(spinCuttingChanged(int)));
-    connect(ui.spinCuttingVCap, SIGNAL(valueChanged(int)), (QObject*)this, SLOT(spinCuttingChanged(int)));
+    connect(ui.spinCuttingTopCap, SIGNAL(valueChanged(int)), (QObject*)this, SLOT(spinCuttingChanged(int)));
+    connect(ui.spinCuttingLeftCap, SIGNAL(valueChanged(int)), (QObject*)this, SLOT(spinCuttingChanged(int)));
+    connect(ui.spinCuttingBottomCap, SIGNAL(valueChanged(int)), (QObject*)this, SLOT(spinCuttingChanged(int)));
+    connect(ui.spinCuttingRightCap, SIGNAL(valueChanged(int)), (QObject*)this, SLOT(spinCuttingChanged(int)));
     connect(ui.tabWidgetCuttingPreview, SIGNAL(currentChanged(int)), (QObject*)this, SLOT(cuttingPreviewTabChange(int)));
 
     // mask alpha:
@@ -448,7 +455,10 @@ void Rockete::menuSaveProjectClicked()
 
 void Rockete::menuReloadProjectClicked()
 {
-
+    if (QFile::exists(projectFile))
+        openProject(projectFile.toAscii().constData());
+    else
+        newProject();
 }
 
 void Rockete::menuSaveClicked()
@@ -462,6 +472,7 @@ void Rockete::menuSaveClicked()
 
     file->save();
     ui.codeTabWidget->setTabText(ui.codeTabWidget->currentIndex(), file->fileInfo.fileName());
+    reloadCurrentDocument();
 }
 
 void Rockete::menuSaveAsClicked()
@@ -774,51 +785,62 @@ void Rockete::updateCuttingTab(const QString &file, int l, int b, int w, int h)
 {
     ui.labelCuttingDim->setText(QString("x:%1px y:%2px w:%3px h:%4px").arg(l).arg(b).arg(w).arg(h));
     ui.cuttingLog->append(QString("<b>File selected %1</b><br/>").arg(file));
-    updateCuttingInfo(ui.spinCuttingHCap->value(), ui.spinCuttingVCap->value());
+    updateCuttingInfo(ui.spinCuttingLeftCap->value(), ui.spinCuttingTopCap->value(), ui.spinCuttingRightCap->value(), ui.spinCuttingBottomCap->value());
+    // setup max values for sliders:
+    ui.spinCuttingLeftCap->setMaximum(floor(w/2.));
+    ui.spinCuttingRightCap->setMaximum(floor(w/2.));
+    ui.spinCuttingBottomCap->setMaximum(floor(h/2.));
+    ui.spinCuttingTopCap->setMaximum(floor(h/2.));
 }
 
 void Rockete::spinCuttingChanged(int value)
 {
-    updateCuttingInfo(ui.spinCuttingHCap->value(), ui.spinCuttingVCap->value());
+    updateCuttingInfo(ui.spinCuttingLeftCap->value(), ui.spinCuttingTopCap->value(), ui.spinCuttingRightCap->value(), ui.spinCuttingBottomCap->value());
 }
 
-void Rockete::updateCuttingInfo(int hvalue, int vvalue)
+void Rockete::updateCuttingInfo(int lvalue, int tvalue, int rvalue, int bvalue)
 {
     int l, b, w, h;
     int n = sscanf(ui.labelCuttingDim->text().toAscii().constData(), "x:%dpx y:%dpx w:%dpx h:%dpx", &l, &b, &w, &h); if (n!=4) {
         ui.cuttingLog->append(QString("<font color=red>Invalid data format.</font color=red><br/>"));
     } else {
-        if (vvalue != 0 || hvalue != 0) {
-            if (vvalue == 0) {
-                ui.cuttingLog->append(QString("<b><font color=blue>Cutting for h-cap %1px:</font></b><br/>").arg(hvalue));
-                ui.cuttingLog->append(QString("&nbsp;<b>left-image:</b> %1px %2 %3px %4px;<br/>").arg(l).arg(b).arg(l+hvalue).arg(b+h));
-                ui.cuttingLog->append(QString("&nbsp;<b>center-image:</b> %1px %2px %3 %4px;<br/>").arg(l+hvalue).arg(b).arg(l+w-hvalue).arg(b+h));
-                ui.cuttingLog->append(QString("&nbsp;<b>right-image:</b> %1px %2px %3 %4px;<br/>").arg(l+w-hvalue).arg(b).arg(l+w).arg(b+h));
-            } else if(hvalue == 0) {
-                ui.cuttingLog->append(QString("<b><font color=blue>Cutting for v-cap %1px:</font></b><br/>").arg(vvalue));
-                ui.cuttingLog->append(QString("&nbsp;<b>top-image:</b> %1px %2 %3px %4px;<br/>").arg(l).arg(b+h-vvalue).arg(l+w).arg(b+h));
-                ui.cuttingLog->append(QString("&nbsp;<b>center-image:</b> %1px %2px %3 %4px;<br/>").arg(l).arg(b+vvalue).arg(l+w).arg(b+h-vvalue));
-                ui.cuttingLog->append(QString("&nbsp;<b>bottom-image:</b> %1px %2px %3 %4px;<br/>").arg(l).arg(b).arg(l+w).arg(b+vvalue));
+        if (lvalue != 0 || tvalue != 0 || rvalue != 0 || bvalue != 0) {
+            if (tvalue == 0 && bvalue == 0) {
+                if (lvalue == rvalue)
+                    ui.cuttingLog->append(QString("<b><font color=blue>Cutting for h-cap %1px:</font></b><br/>").arg(lvalue));
+                else
+                    ui.cuttingLog->append(QString("<b><font color=blue>Cutting for h-cap %1px|%1px:</font></b><br/>").arg(lvalue).arg(rvalue));
+                ui.cuttingLog->append(QString("&nbsp;<b>left-image:</b> %1px %2 %3px %4px;<br/>").arg(l).arg(b).arg(l+lvalue).arg(b+h));
+                ui.cuttingLog->append(QString("&nbsp;<b>center-image:</b> %1px %2px %3 %4px;<br/>").arg(l+lvalue).arg(b).arg(l+w-rvalue).arg(b+h));
+                ui.cuttingLog->append(QString("&nbsp;<b>right-image:</b> %1px %2px %3 %4px;<br/>").arg(l+w-rvalue).arg(b).arg(l+w).arg(b+h));
+            } else if(lvalue == 0 && tvalue == 0) {
+                if (tvalue == bvalue)
+                    ui.cuttingLog->append(QString("<b><font color=blue>Cutting for v-cap %1px:</font></b><br/>").arg(bvalue));
+                else
+                    ui.cuttingLog->append(QString("<b><font color=blue>Cutting for v-cap %1px|%1px:</font></b><br/>").arg(tvalue).arg(bvalue));
+                ui.cuttingLog->append(QString("&nbsp;<b>top-image:</b> %1px %2 %3px %4px;<br/>").arg(l).arg(b+h-tvalue).arg(l+w).arg(b+h));
+                ui.cuttingLog->append(QString("&nbsp;<b>center-image:</b> %1px %2px %3 %4px;<br/>").arg(l).arg(b+bvalue).arg(l+w).arg(b+h-tvalue));
+                ui.cuttingLog->append(QString("&nbsp;<b>bottom-image:</b> %1px %2px %3 %4px;<br/>").arg(l).arg(b).arg(l+w).arg(b+bvalue));
             } else {
-                ui.cuttingLog->append(QString("<b><font color=blue>Cutting for cap %1px x %2px:</font></b><br/>").arg(hvalue).arg(vvalue));
-                ui.cuttingLog->append(QString("&nbsp;<b>top-left-image:</b> %1px %2 %3px %4px;<br/>").arg(l).arg(b).arg(l+hvalue).arg(b+h));
-                ui.cuttingLog->append(QString("&nbsp;<b>top-image:</b> %1px %2 %3px %4px;<br/>").arg(l+hvalue).arg(b).arg(l+w-hvalue).arg(b+h));
-                ui.cuttingLog->append(QString("&nbsp;<b>top-right-image:</b> %1px %2 %3px %4px;<br/>").arg(l+w-hvalue).arg(b).arg(l+w).arg(b+h));
-                ui.cuttingLog->append(QString("&nbsp;<b>left-image:</b> %1px %2 %3px %4px;<br/>").arg(l).arg(b).arg(l+hvalue).arg(b+h));
-                ui.cuttingLog->append(QString("&nbsp;<b>center-image:</b> %1px %2px %3 %4px;<br/>").arg(l+hvalue).arg(b).arg(l+w-hvalue).arg(b+h));
-                ui.cuttingLog->append(QString("&nbsp;<b>right-image:</b> %1px %2px %3 %4px;<br/>").arg(l+w-hvalue).arg(b).arg(l+w).arg(b+h));
-                ui.cuttingLog->append(QString("&nbsp;<b>bottom-left-image:</b> %1px %2 %3px %4px;<br/>").arg(l).arg(b).arg(l+hvalue).arg(b+h));
-                ui.cuttingLog->append(QString("&nbsp;<b>bottom-image:</b> %1px %2 %3px %4px;<br/>").arg(l+hvalue).arg(b).arg(l+w-hvalue).arg(b+h));
-                ui.cuttingLog->append(QString("&nbsp;<b>bottom-right-image:</b> %1px %2 %3px %4px;<br/>").arg(l+w-hvalue).arg(b).arg(l+w).arg(b+h));
+                ui.cuttingLog->append(QString("<b><font color=blue>Cutting for cap h:%1px|%2px v:%1px|%2px:</font></b><br/>").arg(lvalue).arg(rvalue).arg(bvalue).arg(tvalue));
+                ui.cuttingLog->append(QString("&nbsp;<b>top-left-image:</b> %1px %2 %3px %4px;<br/>").arg(l).arg(b).arg(l+lvalue).arg(b+h));
+                ui.cuttingLog->append(QString("&nbsp;<b>top-image:</b> %1px %2 %3px %4px;<br/>").arg(l+lvalue).arg(b).arg(l+w-rvalue).arg(b+h));
+                ui.cuttingLog->append(QString("&nbsp;<b>top-right-image:</b> %1px %2 %3px %4px;<br/>").arg(l+w-rvalue).arg(b).arg(l+w).arg(b+h));
+                ui.cuttingLog->append(QString("&nbsp;<b>left-image:</b> %1px %2 %3px %4px;<br/>").arg(l).arg(b).arg(l+lvalue).arg(b+h));
+                ui.cuttingLog->append(QString("&nbsp;<b>center-image:</b> %1px %2px %3 %4px;<br/>").arg(l+lvalue).arg(b).arg(l+w-rvalue).arg(b+h));
+                ui.cuttingLog->append(QString("&nbsp;<b>right-image:</b> %1px %2px %3 %4px;<br/>").arg(l+w-rvalue).arg(b).arg(l+w).arg(b+h));
+                ui.cuttingLog->append(QString("&nbsp;<b>bottom-left-image:</b> %1px %2 %3px %4px;<br/>").arg(l).arg(b).arg(l+lvalue).arg(b+h));
+                ui.cuttingLog->append(QString("&nbsp;<b>bottom-image:</b> %1px %2 %3px %4px;<br/>").arg(l+lvalue).arg(b).arg(l+w-rvalue).arg(b+h));
+                ui.cuttingLog->append(QString("&nbsp;<b>bottom-right-image:</b> %1px %2 %3px %4px;<br/>").arg(l+w-rvalue).arg(b).arg(l+w).arg(b+h));
             }
             if (selectedTextureTmp.isOpen()) {
                 labelCuttingMask->setStyleSheet(QString(
-                    "border-width: %3px %2px %3px %2px;"
-                    "border-image: url(':/images/border-image.png') 10 10 10 10 stretch stretch;").arg(hvalue).arg(vvalue) /* top, right, bottom, left */
+                    "border-width: %1px %2px %3px %4px;"
+                    "border-image: url(':/images/border-image.png') 10 10 10 10 stretch stretch;").arg(tvalue).arg(rvalue).arg(bvalue).arg(lvalue) /* top, right, bottom, left */
                     );
                 ui.labelCuttingPreview->setStyleSheet(QString(
-                    "border-width: %3px %2px %3px %2px;"
-                    "border-image: url('%1') %3 %2 %3 %2 stretch stretch;").arg(selectedTextureTmp.fileName()).arg(hvalue).arg(vvalue) /* top, right, bottom, left */
+                    "border-width: %2px %3px %4px %5px;"
+                    "border-image: url('%1') %2 %3 %4 %5 stretch stretch;").arg(selectedTextureTmp.fileName()).arg(tvalue).arg(rvalue).arg(bvalue).arg(lvalue) /* top, right, bottom, left */
                     );
                 float aspect = (float)w/(float)h;
                 if (h>w) {
@@ -1469,11 +1491,14 @@ void Rockete::openProject(const char *file_path)
     if (file_info.suffix() == "rproj")
     {
 
-        ProjectManager::getInstance().Initialize(file_path);
+        if (!ProjectManager::getInstance().Initialize(file_path))
+            return; // no file or wrong file
 
         ui.projectFilesTreeWidget->clear();
         ui.projectFilesTreeWidget->clear();
         Settings::setProject(file_path);
+        // save for reload:
+        projectFile = file_info.absoluteFilePath();
 
         foreach( QString path, ProjectManager::getInstance().getFontPaths())
         {

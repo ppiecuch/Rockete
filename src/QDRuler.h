@@ -193,7 +193,11 @@ private:
             if (mDrawText)
             {
                 painter->setRenderHint(QPainter::Antialiasing, true);
+    #ifdef SCALE_TICKS
                 painter->drawText(x1 + 1,y1 + (isHorzRuler ? 7 : -2),QString::number(qAbs(int(step) * startTickNo++)));
+    #else
+                painter->drawText(x1 + 1,y1 + (isHorzRuler ? 7 : -2),QString::number(qAbs(startTickNo++)));
+    #endif
                 painter->setRenderHint(QPainter::Antialiasing, false);
                 iterate++;
             }
