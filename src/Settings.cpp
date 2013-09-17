@@ -69,5 +69,19 @@ Rocket::Core::TextureHandle Settings::getBackroundTextureHandle()
     return backgroundTextureHandle;
 }
 
+void Settings::setSplitterState(const QString &splitter, const QByteArray & state)
+{
+    settings.setValue(QString("splitter%1Sizes").arg(splitter), state);
+}
+
+const QByteArray Settings::getSplitterState(const QString &splitter)
+{
+    QString key = QString("splitter%1Sizes").arg(splitter);
+    if (settings.contains(key))
+      return settings.value(key).toByteArray();
+    else
+      return QByteArray();
+}
+
 QSettings Settings::settings("FishingCactus", "Rockete");
 Rocket::Core::TextureHandle Settings::backgroundTextureHandle = 0;

@@ -184,7 +184,8 @@ void RenderingView::mousePressEvent(QMouseEvent *event)
     if (!currentDocument)
         return;
 
-    if (event->button()==Qt::MidButton) {
+    // panning:
+    if (event->button()==Qt::RightButton) {
         startMousePosition.x = event->x();
         startMousePosition.y = event->y();
         oldPositionOffset = positionOffset;
@@ -203,7 +204,7 @@ void RenderingView::mousePressEvent(QMouseEvent *event)
 
 void RenderingView::mouseReleaseEvent(QMouseEvent *event) 
 {
-    if (event->button()==Qt::MidButton) {
+    if (event->button()==Qt::RightButton) {
         itMustUpdatePositionOffset=false;
         return;
     }

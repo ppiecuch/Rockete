@@ -121,8 +121,22 @@ Rockete::Rockete(QWidget *parent, Qt::WFlags flags)
     ui.checkBoxCuttingMask->setAttribute(Qt::WA_MacSmallSize);
     ui.documentHierarchyTreeWidget->setAttribute(Qt::WA_MacSmallSize);
     ui.documentHierarchyTreeWidget->setIndentation(15); // ui 10 is too small for osx
+    ui.splitter->setHandleWidth(4); // default 7 is bit too big
+    ui.rightPaneSplitter->setHandleWidth(4);
+    ui.leftPaneSplitter->setHandleWidth(4);
 #endif
 
+    // splitters change (for saving state):
+
+    ui.splitter->restoreState(Settings::getSplitterState(ui.splitter->objectName()));
+    ui.rightPaneSplitter->restoreState(Settings::getSplitterState(ui.rightPaneSplitter->objectName()));
+    ui.leftPaneSplitter->restoreState(Settings::getSplitterState(ui.leftPaneSplitter->objectName()));
+
+    connect(ui.splitter, SIGNAL(splitterMoved(int, int)), this, SLOT(splitterMovedChanges(int, int)));
+    connect(ui.rightPaneSplitter, SIGNAL(splitterMoved(int, int)), this, SLOT(splitterMovedChanges(int, int)));
+    connect(ui.leftPaneSplitter, SIGNAL(splitterMoved(int, int)), this, SLOT(splitterMovedChanges(int, int)));
+
+    // setup Tool tab:
     ui.currentToolTab->setLayout(new QGridLayout());
 
     connect(ui.menuRecent, SIGNAL(triggered(QAction*)), this, SLOT(menuRecentFileClicked(QAction*)));
@@ -825,9 +839,9 @@ void Rockete::updateCuttingInfo(int lvalue, int tvalue, int rvalue, int bvalue)
                 ui.cuttingLog->append(QString("<b>background-bottom-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l).arg(b).arg(l+w).arg(b+bvalue));
             } else {
                 ui.cuttingLog->append(QString("<b><font color=blue>Cutting for cap h:%1px|%2px v:%3px|%4px:</font></b><br/>").arg(lvalue).arg(rvalue).arg(bvalue).arg(tvalue));
-                ui.cuttingLog->append(QString("<b>background-top-left-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l).arg(b+h-rvalue).arg(l+lvalue).arg(b+h));
-                ui.cuttingLog->append(QString("<b>background-top-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l+lvalue).arg(b+h-rvalue).arg(l+w-rvalue).arg(b+h));
-                ui.cuttingLog->append(QString("<b>background-top-right-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l+w-rvalue).arg(b+h-rvalue).arg(l+w).arg(b+h));
+                ui.cuttingLog->append(QString("<b>background-bottom-left-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l).arg(b+h-tvalue).arg(l+lvalue).arg(b+h));
+                ui.cuttingLog->append(QString("<b>background-bottom-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l+lvalue).arg(b+h-tvalue).arg(l+w-rvalue).arg(b+h));
+                ui.cuttingLog->append(QString("<b>background-bottom-right-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l+w-rvalue).arg(b+h-tvalue).arg(l+w).arg(b+h));
                 ui.cuttingLog->append(QString("<b>background-left-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l).arg(b+bvalue).arg(l+lvalue).arg(b+h-tvalue));
                 ui.cuttingLog->append(QString("<b>background-center-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l+lvalue).arg(b+bvalue).arg(l+w-rvalue).arg(b+h-tvalue));
                 ui.cuttingLog->append(QString("<b>background-right-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l+w-rvalue).arg(b+bvalue).arg(l+w).arg(b+h-tvalue));
@@ -1861,6 +1875,12 @@ void Rockete::addRulers()
     layout->addWidget(ui.renderingView,1,1);
 
     layout->update();
+}
+
+void Rockete::splitterMovedChanges(int pos, int index)
+{
+    QSplitter *splitter = (QSplitter*)sender();
+    Settings::setSplitterState(splitter->objectName(), splitter->saveState());
 }
 
 void Rockete::logMessage(QString aMsg)

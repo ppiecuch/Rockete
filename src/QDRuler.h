@@ -79,7 +79,7 @@ public slots:
     {
         mCursorPos = this->mapFromGlobal(cursorPos);
         // seems to be not needed:
-        // mCursorPos += QPoint(RULER_BREADTH, RULER_BREADTH);
+        //mCursorPos += QPoint(RULER_BREADTH, RULER_BREADTH);
         update();
     }
 
@@ -222,7 +222,7 @@ private:
                 endPt.setX(this->rect().right());
                 endPt.setY(starPt.y());
             }
-            painter->setPen(QPen(Qt::darkGray,1,Qt::DotLine));
+            painter->setPen(QPen(Qt::darkGray,0,Qt::SolidLine));
             painter->drawLine(starPt,endPt);
         }
     }

@@ -94,6 +94,7 @@ public slots:
     void cuttingPrevSizeChanged(int value);
     void cuttingMaskToggle(bool value);
     void cuttingPreviewTabChange(int tab);
+    void splitterMovedChanges(int pos, int index);
 
 protected:
     virtual void keyPressEvent(QKeyEvent *event);

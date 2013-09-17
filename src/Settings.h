@@ -25,6 +25,8 @@ public:
     static QString getInterfacePath();
     static void setWordListsPath(const QString &dirPath);
     static QString getWordListsPath();
+    static void setSplitterState(const QString &splitter, const QByteArray & state);
+    static const QByteArray getSplitterState(const QString & splitter);
 
 private:
     static QSettings settings;

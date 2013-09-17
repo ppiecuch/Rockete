@@ -2,6 +2,7 @@
 #define ROCKETSYSTEM_H
 
 #include <QString>
+#include <QTime>
 #include "RocketRenderInterface.h"
 #include <Rocket/Core/SystemInterface.h>
 #include "Rockete.h"
@@ -55,6 +56,7 @@ private:
     RocketRenderInterface renderInterface;
     Context *context;
     EventListener *eventListener;
+    QTime t;
     static RocketSystem * instance;
 
 };

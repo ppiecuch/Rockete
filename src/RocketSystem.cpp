@@ -16,7 +16,7 @@ RocketSystem::RocketSystem() :
     context( 0 ),
     eventListener( 0 )
 {
-
+    t.start();
 }
 
 RocketSystem::~RocketSystem()
@@ -26,8 +26,7 @@ RocketSystem::~RocketSystem()
 
 float RocketSystem::GetElapsedTime()
 {
-    // :TODO: Compute elapsed time.
-    return 1.0f;
+    return t.elapsed();
 }
 
 int RocketSystem::TranslateString(Rocket::Core::String& translated, const Rocket::Core::String& input)
