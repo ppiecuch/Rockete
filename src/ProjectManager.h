@@ -25,8 +25,10 @@ public:
     const QString &getSnippetsFolderPath(){return snippetsFolderPath;}
     const QString &getLocalizationOpeningTag(){return localizationOpeningTag;}
     const QString &getLocalizationClosingTag(){return localizationClosingTag;}
+    void setCuttingInfo(const QString &key, const QString &info);
+    const QString getCuttingInfo(const QString &key);
 private:
-    QString projectName;
+    QString projectFile, projectName;
     QStringList fontPaths;
     QStringList texturePaths;
     QStringList interfacePaths;
@@ -34,5 +36,6 @@ private:
     QString snippetsFolderPath;
     QString localizationOpeningTag;
     QString localizationClosingTag;
+    QMap<QString, QString> cutting;
 };
 #endif

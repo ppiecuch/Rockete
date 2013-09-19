@@ -5,6 +5,7 @@ QT += gui core opengl xml
 CONFIG += debug_and_release console qtestlib
 DEFINES += QT_LARGEFILE_SUPPORT QT_OPENGL_LIB
 RESOURCES = rockete.qrc
+ICON = ./images/Icon.icns
 SOURCES += \
  ./src/Action.cpp \
  ./src/ActionGroup.cpp \
@@ -46,7 +47,10 @@ SOURCES += \
  ./src/ToolSelecter.cpp \
  ./src/ToolTest.cpp \
  ./src/XMLHighlighter.cpp \
- ./src/WizardButton.cpp
+ ./src/WizardButton.cpp \
+ ./src/qtplist/PListParser.cpp \
+ ./src/qtplist/PListSerializer.cpp
+
 HEADERS += \
  ./src/Action.h \
  ./src/ActionGroup.h \
@@ -90,8 +94,10 @@ HEADERS += \
  ./src/ToolSelecter.h \
  ./src/ToolTest.h \
  ./src/XMLHighlighter.h \
- ./src/WizardButton.h
-FORMS += ./ui/rockete.ui \
+ ./src/WizardButton.h \
+ ./src/qtplist/PListParser.h \
+ ./src/qtplist/PListSerializer.h
+FORMS += ./ui/rockete.ui
 
 INCLUDEPATH = ./src $(LIBROCKET)/Include
 

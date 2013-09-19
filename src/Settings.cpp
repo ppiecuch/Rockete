@@ -83,5 +83,35 @@ const QByteArray Settings::getSplitterState(const QString &splitter)
       return QByteArray();
 }
 
+void Settings::setValue(const QString &key, const QString &value)
+{
+    settings.setValue(key, value);
+}
+
+void Settings::setValue(const QString &key, const int value)
+{
+    settings.setValue(key, value);
+}
+
+void Settings::setValue(const QString &key, const QVariant &value)
+{
+    settings.setValue(key, value);
+}
+
+QVariant Settings::getValue(const QString &key)
+{
+    return settings.value(key);
+}
+
+QString Settings::getString(const QString &key, const QString def)
+{
+     return settings.value(key, def).toString();
+}
+
+int Settings::getInt(const QString &key, const int def)
+{
+     return settings.value(key, def).toInt();
+}
+
 QSettings Settings::settings("FishingCactus", "Rockete");
 Rocket::Core::TextureHandle Settings::backgroundTextureHandle = 0;

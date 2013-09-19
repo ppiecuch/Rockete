@@ -75,7 +75,7 @@ void logMessageOutput( QtMsgType type, const char *msg )
         {
         case QtDebugMsg:
                 fprintf( stderr, "%s Debug: %s \n", QTime::currentTime().toString().toAscii().data(), msg );
-                sMsg = "<font color=blue>"+sMsg+"</font>";
+                sMsg = "<font color=black><small>"+sMsg+"</small></font>";
                 mw->logMessage(""+sMsg);
                 break;
         case QtCriticalMsg:
@@ -85,12 +85,12 @@ void logMessageOutput( QtMsgType type, const char *msg )
                 break;
         case QtWarningMsg:
                 fprintf( stderr, "%s Warning: %s \n", QTime::currentTime().toString().toAscii().data(), msg );
-                sMsg = "<font color=red>"+sMsg+"</font>";
+                sMsg = "<font color=blue><small>"+sMsg+"</small></font>";
                 mw->logMessage("<b>Warning:</b> "+sMsg);
                 break;
         case QtFatalMsg:
                 fprintf( stderr, "%s Fatal: %s \n", QTime::currentTime().toString().toAscii().data(), msg );
-                mw->logMessage("Fatal: "+sMsg);
+                mw->logMessage("<big><b>Fatal: "+sMsg+"</b></big>");
                 abort();
         }
 }
@@ -768,6 +768,7 @@ void Rockete::fileTreeClicked(QTreeWidgetItem *item, int /*column*/)
     {
         if (ui.tabWidgetDoc->currentIndex() != kTexturePreviewTabIndex) ui.texturePreviewLabel->updateGeometry(); // update size of preview if it is hidden
         QString data = item->data(1, Qt::UserRole).toString();
+        QString key;
         if (data.length()) {
             QString texture = item->data(0, Qt::UserRole).toString();
             QImage image(texture);
@@ -776,14 +777,26 @@ void Rockete::fileTreeClicked(QTreeWidgetItem *item, int /*column*/)
             selectedTexture = image.copy( l, b, w, h);
             selectedTexture.save(selectedTextureTmp.fileName(), "png");
             ui.texturePreviewLabel->setPixmap(QPixmap::fromImage(selectedTexture.scaled(QSize(ui.texturePreviewLabel->width(),ui.texturePreviewLabel->height()),Qt::KeepAspectRatio)));
-            clipboard->setText(QFileInfo(texture).fileName() + " " + QString("%1px %2px %3px %4px").arg(l).arg(b).arg(l+w).arg(b+h)); // place texture coordinates in clipboard
-            updateCuttingTab(QFileInfo(texture).fileName(), l, b, w, h); // flip y for bottom-left origin
+            QString file = QFileInfo(texture).fileName();
+            clipboard->setText(file + " " + QString("%1px %2px %3px %4px").arg(l).arg(b).arg(l+w).arg(b+h)); // place texture coordinates in clipboard
+            updateCuttingTab(file, item->text(1), l, b, w, h); // flip y for bottom-left origin
+            key = file+":"+item->text(1); // key for cutting info
         } else {
             selectedTexture = QImage( getPathForFileName(item->text(1)) );
             selectedTexture.save(selectedTextureTmp.fileName(), "png");
             ui.texturePreviewLabel->setPixmap(QPixmap::fromImage(selectedTexture.scaled(QSize(ui.texturePreviewLabel->width(),ui.texturePreviewLabel->height()),Qt::KeepAspectRatio)));
-            clipboard->setText(item->text(1)); // place filename
-            updateCuttingTab(item->text(1), 0, 0, selectedTexture.width(), selectedTexture.height());
+            clipboard->setText(item->text(1)); // place filename in clipboard
+            updateCuttingTab(item->text(1), "", 0, 0, selectedTexture.width(), selectedTexture.height());
+            key = item->text(1);
+        }
+        QString inf = ProjectManager::getInstance().getCuttingInfo(key); if (!inf.isEmpty()) { // restore cutting info
+            int l, t, r, b;
+            int n = sscanf(inf.toAscii().constData(), "%d;%d;%d;%d", &l, &t, &r, &b); if (n!=4)
+                qDebug() << "Restoring cutting info from invalid data: " << inf;
+            ui.spinCuttingLeftCap->setValue(l);
+            ui.spinCuttingTopCap->setValue(t);
+            ui.spinCuttingRightCap->setValue(r);
+            ui.spinCuttingBottomCap->setValue(b);
         }
     }
 }
@@ -795,10 +808,14 @@ void Rockete::resizeTexturePreview(QResizeEvent * event)
     }
 }
 
-void Rockete::updateCuttingTab(const QString &file, int l, int b, int w, int h)
+void Rockete::updateCuttingTab(const QString &file, const QString &texture, int l, int b, int w, int h)
 {
     ui.labelCuttingDim->setText(QString("x:%1px y:%2px w:%3px h:%4px").arg(l).arg(b).arg(w).arg(h));
     ui.labelCuttingDim->setProperty("texture file", file);
+    if (texture.isEmpty())
+        ui.labelCuttingDim->setProperty("texture key", file);
+    else
+        ui.labelCuttingDim->setProperty("texture key", file+":"+texture);
     ui.cuttingLog->append(QString("<b><font color=blue>File selected %1</font></b><br/>").arg(file));
     updateCuttingInfo(ui.spinCuttingLeftCap->value(), ui.spinCuttingTopCap->value(), ui.spinCuttingRightCap->value(), ui.spinCuttingBottomCap->value());
     // setup max values for sliders:
@@ -811,6 +828,10 @@ void Rockete::updateCuttingTab(const QString &file, int l, int b, int w, int h)
 void Rockete::spinCuttingChanged(int value)
 {
     updateCuttingInfo(ui.spinCuttingLeftCap->value(), ui.spinCuttingTopCap->value(), ui.spinCuttingRightCap->value(), ui.spinCuttingBottomCap->value());
+    const QString file =  ui.labelCuttingDim->property("texture file").toString();
+    QString inf = QString("%1;%2;%3;%4").arg(ui.spinCuttingLeftCap->value()).arg(ui.spinCuttingTopCap->value()).arg(ui.spinCuttingRightCap->value()).arg(ui.spinCuttingBottomCap->value());
+    const QString key =  ui.labelCuttingDim->property("texture key").toString();
+    ProjectManager::getInstance().setCuttingInfo(key, inf); // safe cutting info for this texture
 }
 
 void Rockete::updateCuttingInfo(int lvalue, int tvalue, int rvalue, int bvalue)
@@ -826,19 +847,24 @@ void Rockete::updateCuttingInfo(int lvalue, int tvalue, int rvalue, int bvalue)
                     ui.cuttingLog->append(QString("<b><font color=blue>Cutting for h-cap %1px:</font></b><br/>").arg(lvalue));
                 else
                     ui.cuttingLog->append(QString("<b><font color=blue>Cutting for h-cap %1px|%2px:</font></b><br/>").arg(lvalue).arg(rvalue));
+                ui.cuttingLog->append(QString("/** !background:%1 %2|%3|%4|%5*/<br/>").arg(file).arg(lvalue).arg(rvalue).arg(bvalue).arg(tvalue));
                 ui.cuttingLog->append(QString("&nbsp;<b>left-image:</b> %1 %2px %3 %4px %5px;<br/>").arg(file).arg(l).arg(b).arg(l+lvalue).arg(b+h));
                 ui.cuttingLog->append(QString("&nbsp;<b>center-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l+lvalue).arg(b).arg(l+w-rvalue).arg(b+h));
                 ui.cuttingLog->append(QString("&nbsp;<b>right-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l+w-rvalue).arg(b).arg(l+w).arg(b+h));
+                ui.cuttingLog->append("/** */");
             } else if(lvalue == 0 && tvalue == 0) {
                 if (tvalue == bvalue)
                     ui.cuttingLog->append(QString("<b><font color=blue>Cutting for v-cap %1px:</font></b><br/>").arg(bvalue));
                 else
                     ui.cuttingLog->append(QString("<b><font color=blue>Cutting for v-cap %1px|%2px:</font></b><br/>").arg(tvalue).arg(bvalue));
+                ui.cuttingLog->append(QString("/** !background:%1 %2|%3|%4|%5*/<br/>").arg(file).arg(lvalue).arg(rvalue).arg(bvalue).arg(tvalue));
                 ui.cuttingLog->append(QString("<b>background-bottom-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l).arg(b+h-tvalue).arg(l+w).arg(b+h));
                 ui.cuttingLog->append(QString("<b>background-bottom-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l).arg(b+bvalue).arg(l+w).arg(b+h-tvalue));
                 ui.cuttingLog->append(QString("<b>background-bottom-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l).arg(b).arg(l+w).arg(b+bvalue));
+                ui.cuttingLog->append("/** */");
             } else {
                 ui.cuttingLog->append(QString("<b><font color=blue>Cutting for cap h:%1px|%2px v:%3px|%4px:</font></b><br/>").arg(lvalue).arg(rvalue).arg(bvalue).arg(tvalue));
+                ui.cuttingLog->append(QString("/** !background:%1 %2|%3|%4|%5*/<br/>").arg(file).arg(lvalue).arg(rvalue).arg(bvalue).arg(tvalue));
                 ui.cuttingLog->append(QString("<b>background-bottom-left-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l).arg(b+h-tvalue).arg(l+lvalue).arg(b+h));
                 ui.cuttingLog->append(QString("<b>background-bottom-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l+lvalue).arg(b+h-tvalue).arg(l+w-rvalue).arg(b+h));
                 ui.cuttingLog->append(QString("<b>background-bottom-right-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l+w-rvalue).arg(b+h-tvalue).arg(l+w).arg(b+h));
@@ -848,6 +874,7 @@ void Rockete::updateCuttingInfo(int lvalue, int tvalue, int rvalue, int bvalue)
                 ui.cuttingLog->append(QString("<b>background-top-left-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l).arg(b).arg(l+lvalue).arg(b+bvalue));
                 ui.cuttingLog->append(QString("<b>background-top-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l+lvalue).arg(b).arg(l+w-rvalue).arg(b+bvalue));
                 ui.cuttingLog->append(QString("<b>background-top-right-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l+w-rvalue).arg(b).arg(l+w).arg(b+bvalue));
+                ui.cuttingLog->append("/** */");
             }
             if (selectedTextureTmp.isOpen()) {
                 labelCuttingMask->setStyleSheet(QString(
@@ -1513,7 +1540,7 @@ void Rockete::openProject(const char *file_path)
         ui.projectFilesTreeWidget->clear();
         ui.projectFilesTreeWidget->clear();
         Settings::setProject(file_path);
-        // save for reload:
+        // save path for reloading action:
         projectFile = file_info.absoluteFilePath();
 
         foreach( QString path, ProjectManager::getInstance().getFontPaths())
@@ -1618,8 +1645,12 @@ bool Rockete::readSpriteSheetInfo(QTreeWidgetItem *item, const QString &texture)
     bool valid_found;
     QImage image(texture);
     QFileInfo tinfo(texture);
+    QString css_filename = tinfo.absolutePath()+QDir::separator()+QString(tinfo.completeBaseName()+".rcss"); // css info file
+    FILE *css_file = fopen( css_filename.toUtf8().constData(), "w" );
+    if (!css_file)
+        qInfo("Failed to open %s file.", css_filename.toUtf8().constData());
     QString cat_filename = tinfo.absolutePath()+QDir::separator()+QString(tinfo.completeBaseName()+".cat");
-    FILE *cat_file = fopen( cat_filename.toUtf8().data(), "r" );
+    FILE *cat_file = fopen( cat_filename.toUtf8().constData(), "r" );
     if (!cat_file)
         goto format2;
     valid_found = false; while (!feof(cat_file)) {
@@ -1664,13 +1695,29 @@ bool Rockete::readSpriteSheetInfo(QTreeWidgetItem *item, const QString &texture)
             QString data = QString("%1px %2px %3px %4px").arg(left).arg(top).arg(right-left).arg(bottom-top);
             new_item->setData(0, Qt::UserRole, texture);
             new_item->setData(1, Qt::UserRole, data);
+            if (css_file) {
+                fprintf(css_file,
+                        "img.%s {\n"
+                        "  width: %d;\n"
+                        "  height: %d;\n"
+                        "  icon-decorator: image;\n"
+                        "  icon-image: %s %d %d %d %d;\n"
+                        "}\n\n"
+                        , tname
+                        , right-left, bottom-top
+                        , tinfo.fileName().toUtf8().constData()
+                        , left, top, right, bottom
+                        );
+            }
             valid_found = true;
         }
     };
     if (valid_found) {
         item->setIcon(0, QIcon(":/images/icon_atlas.png"));
+        if (css_file) fclose(css_file);
+        if (cat_file) fclose(cat_file);
         return true;
-    }
+    } // if no valid entry found, continue with next format
 
     // <?xml version="1.0" encoding="UTF-8"?>
     // <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -1709,6 +1756,10 @@ bool Rockete::readSpriteSheetInfo(QTreeWidgetItem *item, const QString &texture)
     // </plist>
 format2:
     // 2. cocos2d plist info:
+    QString plist_filename = tinfo.absolutePath()+QDir::separator()+QString(tinfo.completeBaseName()+".plist");
+    FILE *plist_file = fopen( plist_filename.toUtf8().constData(), "r" );
+    if (!plist_file)
+        goto format3;
     valid_found = false;
 
     // ;Sprite Monkey Coordinates, UTF-8
@@ -1730,7 +1781,15 @@ format2:
     // elf run 00013,0,768,256,256
     // elf run 00014,256,768,256,256
     // elf run 00015,512,768,256,256
+format3:
     // 3. smc
+    QString smc_filename = tinfo.absolutePath()+QDir::separator()+QString(tinfo.completeBaseName()+".smc");
+    FILE *smc_file = fopen( smc_filename.toUtf8().constData(), "r" );
+    if (!smc_file)
+        return false;
+    valid_found = false;
+
+    // no catalog found or no valid entries.
     return false;
 }
 

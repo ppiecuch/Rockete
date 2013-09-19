@@ -61,6 +61,7 @@ bool ProjectManager::Initialize(const QString &filename)
     interfacePaths.clear();
 
     projectName = file_info.baseName();
+    projectFile = file_info.absoluteFilePath();
 
 #ifdef Q_WS_MAC
     CFURLRef appUrlRef = CFBundleCopyBundleURL(CFBundleGetMainBundle());
@@ -242,12 +243,42 @@ bool ProjectManager::Initialize(const QString &filename)
         snippetsFolderPath = "snippets/";
     }
 
+    node_list = domDocument.elementsByTagName("CuttingInfo");
+
+    if (node_list.count()) for(int i = 0; i < node_list.count(); i++)
+    {
+        QDomNode node = node_list.at(i);
+        if(node.firstChild().isText())
+        {
+            const QString& nodeText = node.firstChild().toText().data();
+            const QString& key = node.toElement().attribute("texture", "");
+            if (key.isEmpty())
+                qDebug() <<"Invalid cutting info node: " << nodeText;
+            else
+                cutting[key] = nodeText;
+        }
+    }
+
 #ifdef Q_WS_MAC
     CFRelease(appUrlRef);
     CFRelease(macPath);
 #endif
 
     return true;
+}
+
+void ProjectManager::setCuttingInfo(const QString &key, const QString &info)
+{
+    cutting[key] = info;
+    if (QFile::exists(projectFile)) Serialize(projectFile);
+}
+
+const QString ProjectManager::getCuttingInfo(const QString &key)
+{
+    if (cutting.contains(key))
+        return cutting[key];
+    else
+        return "";
 }
 
 static void _saveQStringList(QXmlStreamWriter &xmlWriter, const QString &sec, const QStringList &list)
@@ -291,6 +322,14 @@ void ProjectManager::Serialize(const QString &filename)
         xmlWriter.writeStartElement("LocalizationClosingTag");
         xmlWriter.writeCharacters(localizationClosingTag);
         xmlWriter.writeEndElement();
+
+        QMap<QString, QString>::iterator i;
+        for (i = cutting.begin(); i != cutting.end(); ++i) {
+            xmlWriter.writeStartElement("CuttingInfo");
+            xmlWriter.writeAttribute("texture", i.key());
+            xmlWriter.writeCharacters(i.value());
+            xmlWriter.writeEndElement();
+        }
 
         xmlWriter.writeEndElement();
         xmlWriter.writeEndDocument();

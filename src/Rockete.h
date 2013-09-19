@@ -115,7 +115,7 @@ private:
     void loadPlugins();
     void closeTab(int index, bool must_save = true);
     void addRulers();
-    void updateCuttingTab(const QString &file, int l, int b, int w, int h);
+    void updateCuttingTab(const QString &file, const QString &texture, int l, int b, int w, int h);
     void updateCuttingInfo(int lvalue, int tvalue, int rvalue, int bvalue);
 
     Ui::rocketeClass ui;
