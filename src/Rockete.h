@@ -1,6 +1,7 @@
 #ifndef ROCKETE_H
 #define ROCKETE_H
 
+#include <stdarg.h>
 #include <QtGui/QMainWindow>
 #include <QFileSystemWatcher>
 #include <QLabel>
@@ -144,17 +145,20 @@ public:
 };
 
 #if defined(Q_CC_MSVC) || defined(Q_CC_MSVC_NET)
-# define f_ssprintf(x, ...)                            \
-   int _ss_size = _snprintf(0, 0, ##__VA_ARGS__);      \
-   char *_ss_ret = (char*)alloca(_ss_size+1);          \
-   _snprintf(_ss_ret, _ss_size+1, ##__VA_ARGS__);      \
-   QString x = _ss_ret;
+inline char *f_ssprintf(const char *format, va_list args) {
+   int _ss_size = _vsnprintf(0, 0, format, args);
+   char *_ss_ret = (char*)alloca(_ss_size+1);
+   _vsnprintf(_ss_ret, _ss_size+1, format, args);
+   return _ss_ret;
+}
 
 # define qInfo(...) { int _ss_size = _snprintf(0, 0, ##__VA_ARGS__);    \
     char *_ss_ret = (char*)alloca(_ss_size+1);                          \
     _snprintf(_ss_ret, _ss_size+1, ##__VA_ARGS__);                      \
     Rockete::instance->logMessage(_ss_ret); }
+
 #else
+
 # define f_ssprintf(...)                                \
     ({ int _ss_size = snprintf(0, 0, ##__VA_ARGS__);    \
     char *_ss_ret = (char*)alloca(_ss_size+1);          \
