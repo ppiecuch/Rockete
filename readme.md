@@ -2,9 +2,13 @@
 
 ## New changelog and development progress
 
+1. New project management options
+2. Texture atlas support
+3. New texture atlas preview
+4. New fonts preview
 
 
-#### -- ORIGINAL readme.md --
+-- ORIGINAL readme.md --
 
 ## Status
 [![Build Status](https://secure.travis-ci.org/FishingCactus/Rockete.png?branch=master)](http://travis-ci.org/FishingCactus/Rockete)
