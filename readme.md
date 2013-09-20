@@ -9,7 +9,6 @@
 
 
 -- ORIGINAL readme.md --
-
 ## Status
 [![Build Status](https://secure.travis-ci.org/FishingCactus/Rockete.png?branch=master)](http://travis-ci.org/FishingCactus/Rockete)
 
