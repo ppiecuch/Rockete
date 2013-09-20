@@ -118,6 +118,7 @@ private:
     void addRulers();
     void updateCuttingTab(const QString &file, const QString &texture, int l, int b, int w, int h);
     void updateCuttingInfo(int lvalue, int tvalue, int rvalue, int bvalue);
+    void updateTextureInfoFiles();
 
     Ui::rocketeClass ui;
     RenderingView *renderingView;
@@ -134,9 +135,9 @@ private:
     QTreeWidgetItem *selectedTreeViewItem;
     DocumentHierarchyEventFilter *hierarchyEventFilter;
     QDRuler *horzRuler, *vertRuler;
-    // selected texture image/subimage:
-    QImage selectedTexture;
-    QTemporaryFile selectedTextureTmp;
+    QImage selectedTexture; // selected texture image/subimage
+    QTemporaryFile selectedTextureTmp; // selected texture tmp. image file
+    QMap<QString, QMap<QString, QRect> > texturesAtlasInf; // all textures/atlas info
     // opened project file
     QString projectFile;
 

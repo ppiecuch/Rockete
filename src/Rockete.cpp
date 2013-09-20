@@ -30,6 +30,7 @@
 #include "QDLabel.h"
 #include "LocalizationManagerInterface.h"
 #include "OpenedLuaScript.h"
+#include "qtplist/PListParser.h"
 
 const int kTexturePreviewTabIndex = 1;
 const int kCuttingImagePreviewTabIndex = 1;
@@ -1503,7 +1504,9 @@ void Rockete::newProject()
 
     ui.projectFilesTreeWidget->clear();
     ui.projectFilesTreeWidget->clear();
+    texturesAtlasInf.clear();
     Settings::setProject(filePath);
+    projectFile = "";
 
     foreach( QString path, ProjectManager::getInstance().getFontPaths())
     {
@@ -1539,6 +1542,7 @@ void Rockete::openProject(const char *file_path)
 
         ui.projectFilesTreeWidget->clear();
         ui.projectFilesTreeWidget->clear();
+        texturesAtlasInf.clear();
         Settings::setProject(file_path);
         // save path for reloading action:
         projectFile = file_info.absoluteFilePath();
@@ -1561,6 +1565,9 @@ void Rockete::openProject(const char *file_path)
 
         populateTreeView("Word Lists", ProjectManager::getInstance().getWordListPath());
         populateTreeView("Snippets", ProjectManager::getInstance().getSnippetsFolderPath());
+
+        if (!texturesAtlasInf.isEmpty())
+            updateTextureInfoFiles();
 
         if (file_info.exists()) {
             Settings::setMostRecentFile(file_info.filePath());
@@ -1645,10 +1652,10 @@ bool Rockete::readSpriteSheetInfo(QTreeWidgetItem *item, const QString &texture)
     bool valid_found;
     QImage image(texture);
     QFileInfo tinfo(texture);
+
     QString css_filename = tinfo.absolutePath()+QDir::separator()+QString(tinfo.completeBaseName()+".rcss"); // css info file
-    FILE *css_file = fopen( css_filename.toUtf8().constData(), "w" );
-    if (!css_file)
-        qInfo("Failed to open %s file.", css_filename.toUtf8().constData());
+    texturesAtlasInf[css_filename][tinfo.fileName()] = QRect(0, 0, image.width(), image.height()); // texture atlas info
+
     QString cat_filename = tinfo.absolutePath()+QDir::separator()+QString(tinfo.completeBaseName()+".cat");
     FILE *cat_file = fopen( cat_filename.toUtf8().constData(), "r" );
     if (!cat_file)
@@ -1695,26 +1702,14 @@ bool Rockete::readSpriteSheetInfo(QTreeWidgetItem *item, const QString &texture)
             QString data = QString("%1px %2px %3px %4px").arg(left).arg(top).arg(right-left).arg(bottom-top);
             new_item->setData(0, Qt::UserRole, texture);
             new_item->setData(1, Qt::UserRole, data);
-            if (css_file) {
-                fprintf(css_file,
-                        "img.%s {\n"
-                        "  width: %d;\n"
-                        "  height: %d;\n"
-                        "  icon-decorator: image;\n"
-                        "  icon-image: %s %d %d %d %d;\n"
-                        "}\n\n"
-                        , tname
-                        , right-left, bottom-top
-                        , tinfo.fileName().toUtf8().constData()
-                        , left, top, right, bottom
-                        );
-            }
+
+            texturesAtlasInf[css_filename][tname] = QRect(left, top, right-left, bottom-top); // update texture atlas info
+
             valid_found = true;
         }
     };
     if (valid_found) {
         item->setIcon(0, QIcon(":/images/icon_atlas.png"));
-        if (css_file) fclose(css_file);
         if (cat_file) fclose(cat_file);
         return true;
     } // if no valid entry found, continue with next format
@@ -1791,6 +1786,35 @@ format3:
 
     // no catalog found or no valid entries.
     return false;
+}
+
+void Rockete::updateTextureInfoFiles()
+{
+    foreach(const QString &css_filename, texturesAtlasInf.keys()) {
+        qDebug() << "Updating " << css_filename;
+        const QMap<QString, QRect> &atlas = texturesAtlasInf[css_filename];
+        FILE *css_file = fopen( css_filename.toUtf8().constData(), "w" );
+        if (!css_file)
+            qInfo("Failed to open %s file.", css_filename.toUtf8().constData())
+        else {
+            foreach(const QString &texture, atlas.keys()) {
+                const QRect &rc = atlas[texture];
+                fprintf(css_file,
+                    ".%s {\n"
+                    "  width: %d;\n"
+                    "  height: %d;\n"
+                    "  icon-decorator: image;\n"
+                    "  icon-image: %s %d %d %d %d;\n"
+                    "}\n\n"
+                    , texture.toUtf8().constData()
+                    , rc.width(), rc.height()
+                    , QFileInfo(css_filename).completeBaseName().toUtf8().constData()
+                    , rc.left(), rc.top(), rc.right(), rc.bottom()
+                );
+            }
+            fclose(css_file);
+        }
+    }
 }
 
 void Rockete::populateTreeView(const QString &top_item_name, const QString &directory_path)
