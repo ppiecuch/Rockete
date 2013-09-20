@@ -111,7 +111,7 @@ private:
     int openLuaScript(const char *);
     int openASCIIFile(const char *);
     void generateMenuRecent();
-    bool readSpriteSheetInfo(QTreeWidgetItem *item, const QString &texture);
+    QString readSpriteSheetInfo(QTreeWidgetItem *item, const QString &texture);
     void populateTreeView(const QString &top_item_name, const QString &directory_path);
     void loadPlugins();
     void closeTab(int index, bool must_save = true);
