@@ -790,14 +790,11 @@ void Rockete::fileTreeClicked(QTreeWidgetItem *item, int /*column*/)
             updateCuttingTab(item->text(1), "", 0, 0, selectedTexture.width(), selectedTexture.height());
             key = item->text(1);
         }
-        QString inf = ProjectManager::getInstance().getCuttingInfo(key); if (!inf.isEmpty()) { // restore cutting info
-            int l, t, r, b;
-            int n = sscanf(inf.toAscii().constData(), "%d;%d;%d;%d", &l, &t, &r, &b); if (n!=4)
-                qDebug() << "Restoring cutting info from invalid data: " << inf;
-            ui.spinCuttingLeftCap->setValue(l);
-            ui.spinCuttingTopCap->setValue(t);
-            ui.spinCuttingRightCap->setValue(r);
-            ui.spinCuttingBottomCap->setValue(b);
+        const CssCuttingInfo inf = ProjectManager::getInstance().getCuttingInfo(key); if (!inf.isEmpty()) { // restore cutting info
+            ui.spinCuttingLeftCap->setValue(inf.left);
+            ui.spinCuttingTopCap->setValue(inf.top);
+            ui.spinCuttingRightCap->setValue(inf.left);
+            ui.spinCuttingBottomCap->setValue(inf.bottom);
         }
     }
 }
@@ -849,9 +846,9 @@ void Rockete::updateCuttingInfo(int lvalue, int tvalue, int rvalue, int bvalue)
                 else
                     ui.cuttingLog->append(QString("<b><font color=blue>Cutting for h-cap %1px|%2px:</font></b><br/>").arg(lvalue).arg(rvalue));
                 ui.cuttingLog->append(QString("/** !background:%1 %2|%3|%4|%5*/<br/>").arg(file).arg(lvalue).arg(rvalue).arg(bvalue).arg(tvalue));
-                ui.cuttingLog->append(QString("&nbsp;<b>left-image:</b> %1 %2px %3 %4px %5px;<br/>").arg(file).arg(l).arg(b).arg(l+lvalue).arg(b+h));
-                ui.cuttingLog->append(QString("&nbsp;<b>center-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l+lvalue).arg(b).arg(l+w-rvalue).arg(b+h));
-                ui.cuttingLog->append(QString("&nbsp;<b>right-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l+w-rvalue).arg(b).arg(l+w).arg(b+h));
+                ui.cuttingLog->append(QString("<b>background-left-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l).arg(b).arg(l+lvalue).arg(b+h));
+                ui.cuttingLog->append(QString("<b>background-center-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l+lvalue).arg(b).arg(l+w-rvalue).arg(b+h));
+                ui.cuttingLog->append(QString("<b>background-right-image:</b> %1 %2px %3px %4px %5px;<br/>").arg(file).arg(l+w-rvalue).arg(b).arg(l+w).arg(b+h));
                 ui.cuttingLog->append("/** */");
             } else if(lvalue == 0 && tvalue == 0) {
                 if (tvalue == bvalue)
@@ -1790,16 +1787,77 @@ format3:
 
 void Rockete::updateTextureInfoFiles()
 {
-    foreach(const QString &css_filename, texturesAtlasInf.keys()) {
+    foreach(const QString &atlas_filename, texturesAtlasInf.keys()) {
+
+        const QMap<QString, QRect> &atlas = texturesAtlasInf[atlas_filename];
+        QFileInfo tinfo(atlas_filename);
+
+        QString css_filename = tinfo.absolutePath()+QDir::separator()+QString(tinfo.completeBaseName()+".rcss"); // css info file
         qDebug() << "Updating " << css_filename;
-        const QMap<QString, QRect> &atlas = texturesAtlasInf[css_filename];
+
         FILE *css_file = fopen( css_filename.toUtf8().constData(), "w" );
         if (!css_file)
             qInfo("Failed to open %s file.", css_filename.toUtf8().constData())
         else {
             foreach(const QString &texture, atlas.keys()) {
                 const QRect &rc = atlas[texture];
-                fprintf(css_file,
+                // check border cutting information
+                const CssCuttingInfo inf = ProjectManager::getInstance().getCuttingInfo(tinfo.completeBaseName()+":"+texture); if (!inf.isEmpty()) {
+                    const int &l=rc.left(), &b=rc.bottom(), &w=rc.width(), &h=rc.height();
+                    const int &lvalue=inf.left, &rvalue=inf.right, &tvalue=inf.top, &bvalue=inf.bottom;
+                    const char *afile =  tinfo.completeBaseName().toUtf8().constData(), *tname =  texture.toUtf8().constData();
+                    if (tvalue == bvalue == 0)
+                        fprintf(css_file,
+                            ".%s {\n"
+                            "  background-decorator: tiled-horizontal;\n"
+                            "  background-left-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background-center-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background-right-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "}\n\n"
+                            , tname
+                            , afile, l, b, l+lvalue, b+h
+                            , afile, l+lvalue, b, l+w-rvalue, b+h
+                            , afile, l+w-rvalue, b, l+w, b+h
+                        );
+                    else if (lvalue == rvalue == 0)
+                        fprintf(css_file,
+                            ".%s {\n"
+                            "  background-decorator: tiled-vertical;\n"
+                            "  background-bottom-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background-bottom-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background-bottom-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "}\n\n"
+                            , tname
+                            , afile, l, b+h-tvalue, l+w, b+h
+                            , afile, l, b+bvalue, l+w, b+h-tvalue
+                            , afile, l, b, l+w, b+bvalue
+                        );
+                    else /* tile-box decorator */
+                        fprintf(css_file,
+                            ".%s {\n"
+                            "  background-decorator: tiled-box;\n"
+                            "  background-bottom-left-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background-bottom-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background-bottom-right-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background-left-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background-center-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background-right-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background-top-left-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background-top-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background-top-right-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "}\n\n"
+                            , tname
+                            , afile, l, b+h-tvalue, l+lvalue, b+h
+                            , afile, l+lvalue, b+h-tvalue, l+w-rvalue, b+h
+                            , afile, l+w-rvalue, b+h-tvalue, l+w, b+h
+                            , afile, l, b+bvalue, l+lvalue, b+h-tvalue
+                            , afile, l+lvalue, b+bvalue, l+w-rvalue, b+h-tvalue
+                            , afile, l+w-rvalue, b+bvalue, l+w, b+h-tvalue
+                            , afile, l, b, l+lvalue, b+bvalue
+                            , afile, l+lvalue, b, l+w-rvalue, b+bvalue
+                            , afile, l+w-rvalue, b, l+w, b+bvalue
+                        );
+                } else fprintf(css_file,
                     ".%s {\n"
                     "  width: %d;\n"
                     "  height: %d;\n"
@@ -1808,7 +1866,7 @@ void Rockete::updateTextureInfoFiles()
                     "}\n\n"
                     , texture.toUtf8().constData()
                     , rc.width(), rc.height()
-                    , QFileInfo(css_filename).completeBaseName().toUtf8().constData()
+                    , tinfo.completeBaseName().toUtf8().constData()
                     , rc.left(), rc.top(), rc.right(), rc.bottom()
                 );
             }

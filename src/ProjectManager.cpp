@@ -267,18 +267,18 @@ bool ProjectManager::Initialize(const QString &filename)
     return true;
 }
 
-void ProjectManager::setCuttingInfo(const QString &key, const QString &info)
+void ProjectManager::setCuttingInfo(const QString &key, const CssCuttingInfo &info)
 {
     cutting[key] = info;
     if (QFile::exists(projectFile)) Serialize(projectFile);
 }
 
-const QString ProjectManager::getCuttingInfo(const QString &key)
+CssCuttingInfo ProjectManager::getCuttingInfo(const QString &key)
 {
     if (cutting.contains(key))
         return cutting[key];
     else
-        return "";
+        return CssCuttingInfo(); // empty info
 }
 
 static void _saveQStringList(QXmlStreamWriter &xmlWriter, const QString &sec, const QStringList &list)
@@ -323,7 +323,7 @@ void ProjectManager::Serialize(const QString &filename)
         xmlWriter.writeCharacters(localizationClosingTag);
         xmlWriter.writeEndElement();
 
-        QMap<QString, QString>::iterator i;
+        QMap<QString, CssCuttingInfo>::iterator i;
         for (i = cutting.begin(); i != cutting.end(); ++i) {
             xmlWriter.writeStartElement("CuttingInfo");
             xmlWriter.writeAttribute("texture", i.key());
