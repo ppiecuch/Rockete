@@ -13,7 +13,7 @@ struct CssCuttingInfo {
         qDebug() << "Invalid cutting data: " << inf;
     }
     operator const QString() const { return QString("%1;%2;%3;%4").arg(left).arg(top).arg(right).arg(bottom); }
-    bool isEmpty() const { return (left == top == right == bottom == 0); }
+    bool isEmpty() const { return (left == 0 && top == 0 && right == 0 && bottom == 0); }
 };
 
 class ProjectManager

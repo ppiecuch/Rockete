@@ -804,7 +804,7 @@ void Rockete::fileTreeClicked(QTreeWidgetItem *item, int /*column*/)
         }
     } else if(item->text(1).endsWith("ttf")||item->text(1).endsWith("otf")||item->text(1).endsWith("fon")) {
         const int kCharsSpace = 2;
-        const int kPreviewMargin = 2;
+        const int kPreviewMargin = 3;
         // font preview
         qDebug() << "Preview font " << item->data(0,  Qt::UserRole).toString();
         QPixmap preview(ui.texturePreviewLabel->width(), ui.texturePreviewLabel->height());
@@ -829,7 +829,7 @@ void Rockete::fileTreeClicked(QTreeWidgetItem *item, int /*column*/)
         paint.begin(&preview);
         paint.setPen(QPen(Qt::black, 0));
         paint.setBrush(Qt::NoBrush);
-        paint.drawGlyphRun(QPointF(2, fnt.ascent()), gr);
+        paint.drawGlyphRun(QPointF(kPreviewMargin, fnt.ascent()), gr);
         paint.end();
         ui.texturePreviewLabel->setPixmap(preview);
     } else {
@@ -1689,8 +1689,7 @@ QString Rockete::readSpriteSheetInfo(QTreeWidgetItem *item, const QString &textu
     QImage image(texture);
     QFileInfo tinfo(texture);
 
-    QString css_filename = tinfo.absolutePath()+QDir::separator()+QString(tinfo.completeBaseName()+".rcss"); // css info file
-    texturesAtlasInf[css_filename][tinfo.fileName()] = QRect(0, 0, image.width(), image.height()); // texture atlas info
+    texturesAtlasInf[tinfo.absoluteFilePath()][tinfo.fileName()] = QRect(0, 0, image.width(), image.height()); // texture atlas info
 
     QString cat_filename = tinfo.absolutePath()+QDir::separator()+QString(tinfo.completeBaseName()+".cat");
     FILE *cat_file = fopen( cat_filename.toUtf8().constData(), "r" );
@@ -1739,7 +1738,7 @@ QString Rockete::readSpriteSheetInfo(QTreeWidgetItem *item, const QString &textu
             new_item->setData(0, Qt::UserRole, texture);
             new_item->setData(1, Qt::UserRole, data);
 
-            texturesAtlasInf[css_filename][tname] = QRect(left, top, right-left, bottom-top); // update texture atlas info
+            texturesAtlasInf[tinfo.absoluteFilePath()][tname] = QRect(left, top, right-left, bottom-top); // update texture atlas info
 
             valid_found = true;
         }
@@ -1842,38 +1841,42 @@ void Rockete::updateTextureInfoFiles()
             foreach(const QString &texture, atlas.keys()) {
                 const QRect &rc = atlas[texture];
                 // check border cutting information
-                const CssCuttingInfo inf = ProjectManager::getInstance().getCuttingInfo(tinfo.completeBaseName()+":"+texture); if (!inf.isEmpty()) {
-                    const int &l=rc.left(), &b=rc.bottom(), &w=rc.width(), &h=rc.height();
+                const CssCuttingInfo inf = ProjectManager::getInstance().getCuttingInfo(tinfo.fileName()+":"+texture); if (!inf.isEmpty()) {
+                    const int &l=rc.left(), &b=rc.top(), &w=rc.width(), &h=rc.height();
                     const int &lvalue=inf.left, &rvalue=inf.right, &tvalue=inf.top, &bvalue=inf.bottom;
-                    const char *afile =  tinfo.completeBaseName().toUtf8().constData(), *tname =  texture.toUtf8().constData();
-                    if (tvalue == bvalue == 0)
+                    if (tvalue == 0 && bvalue == 0)
                         fprintf(css_file,
+                            "/* cutting: %d|%d|%d|%d */\n"
                             ".%s {\n"
                             "  background-decorator: tiled-horizontal;\n"
                             "  background-left-image: %s %dpx %dpx %dpx %dpx;\n"
                             "  background-center-image: %s %dpx %dpx %dpx %dpx;\n"
                             "  background-right-image: %s %dpx %dpx %dpx %dpx;\n"
                             "}\n\n"
-                            , tname
-                            , afile, l, b, l+lvalue, b+h
-                            , afile, l+lvalue, b, l+w-rvalue, b+h
-                            , afile, l+w-rvalue, b, l+w, b+h
+                            , lvalue, rvalue, bvalue, tvalue
+                            , texture.toUtf8().constData()
+                            , tinfo.fileName().toUtf8().constData(), l, b, l+lvalue, b+h
+                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b, l+w-rvalue, b+h
+                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b, l+w, b+h
                         );
-                    else if (lvalue == rvalue == 0)
+                    else if (lvalue == 0 && rvalue == 0)
                         fprintf(css_file,
+                            "/* cutting: %d|%d|%d|%d */\n"
                             ".%s {\n"
                             "  background-decorator: tiled-vertical;\n"
                             "  background-bottom-image: %s %dpx %dpx %dpx %dpx;\n"
                             "  background-bottom-image: %s %dpx %dpx %dpx %dpx;\n"
                             "  background-bottom-image: %s %dpx %dpx %dpx %dpx;\n"
                             "}\n\n"
-                            , tname
-                            , afile, l, b+h-tvalue, l+w, b+h
-                            , afile, l, b+bvalue, l+w, b+h-tvalue
-                            , afile, l, b, l+w, b+bvalue
+                            , lvalue, rvalue, bvalue, tvalue
+                            , texture.toUtf8().constData()
+                            , tinfo.fileName().toUtf8().constData(), l, b+h-tvalue, l+w, b+h
+                            , tinfo.fileName().toUtf8().constData(), l, b+bvalue, l+w, b+h-tvalue
+                            , tinfo.fileName().toUtf8().constData(), l, b, l+w, b+bvalue
                         );
                     else /* tile-box decorator */
                         fprintf(css_file,
+                            "/* cutting: %d|%d|%d|%d */\n"
                             ".%s {\n"
                             "  background-decorator: tiled-box;\n"
                             "  background-bottom-left-image: %s %dpx %dpx %dpx %dpx;\n"
@@ -1886,16 +1889,17 @@ void Rockete::updateTextureInfoFiles()
                             "  background-top-image: %s %dpx %dpx %dpx %dpx;\n"
                             "  background-top-right-image: %s %dpx %dpx %dpx %dpx;\n"
                             "}\n\n"
-                            , tname
-                            , afile, l, b+h-tvalue, l+lvalue, b+h
-                            , afile, l+lvalue, b+h-tvalue, l+w-rvalue, b+h
-                            , afile, l+w-rvalue, b+h-tvalue, l+w, b+h
-                            , afile, l, b+bvalue, l+lvalue, b+h-tvalue
-                            , afile, l+lvalue, b+bvalue, l+w-rvalue, b+h-tvalue
-                            , afile, l+w-rvalue, b+bvalue, l+w, b+h-tvalue
-                            , afile, l, b, l+lvalue, b+bvalue
-                            , afile, l+lvalue, b, l+w-rvalue, b+bvalue
-                            , afile, l+w-rvalue, b, l+w, b+bvalue
+                            , lvalue, rvalue, bvalue, tvalue
+                            , texture.toUtf8().constData()
+                            , tinfo.fileName().toUtf8().constData(), l, b+h-tvalue, l+lvalue, b+h
+                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b+h-tvalue, l+w-rvalue, b+h
+                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b+h-tvalue, l+w, b+h
+                            , tinfo.fileName().toUtf8().constData(), l, b+bvalue, l+lvalue, b+h-tvalue
+                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b+bvalue, l+w-rvalue, b+h-tvalue
+                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b+bvalue, l+w, b+h-tvalue
+                            , tinfo.fileName().toUtf8().constData(), l, b, l+lvalue, b+bvalue
+                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b, l+w-rvalue, b+bvalue
+                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b, l+w, b+bvalue
                         );
                 } else fprintf(css_file,
                     ".%s {\n"
@@ -1906,7 +1910,7 @@ void Rockete::updateTextureInfoFiles()
                     "}\n\n"
                     , texture.toUtf8().constData()
                     , rc.width(), rc.height()
-                    , tinfo.completeBaseName().toUtf8().constData()
+                    , tinfo.fileName().toUtf8().constData()
                     , rc.left(), rc.top(), rc.right(), rc.bottom()
                 );
             }
