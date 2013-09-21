@@ -1854,7 +1854,7 @@ void Rockete::updateTextureInfoFiles()
                             "  background-right-image: %s %dpx %dpx %dpx %dpx;\n"
                             "}\n\n"
                             , lvalue, rvalue, bvalue, tvalue
-                            , texture.toUtf8().constData()
+                            , QFileInfo(texture).completeBaseName().toUtf8().constData()
                             , tinfo.fileName().toUtf8().constData(), l, b, l+lvalue, b+h
                             , tinfo.fileName().toUtf8().constData(), l+lvalue, b, l+w-rvalue, b+h
                             , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b, l+w, b+h
@@ -1869,7 +1869,7 @@ void Rockete::updateTextureInfoFiles()
                             "  background-bottom-image: %s %dpx %dpx %dpx %dpx;\n"
                             "}\n\n"
                             , lvalue, rvalue, bvalue, tvalue
-                            , texture.toUtf8().constData()
+                            , QFileInfo(texture).completeBaseName().toUtf8().constData()
                             , tinfo.fileName().toUtf8().constData(), l, b+h-tvalue, l+w, b+h
                             , tinfo.fileName().toUtf8().constData(), l, b+bvalue, l+w, b+h-tvalue
                             , tinfo.fileName().toUtf8().constData(), l, b, l+w, b+bvalue
@@ -1890,7 +1890,7 @@ void Rockete::updateTextureInfoFiles()
                             "  background-top-right-image: %s %dpx %dpx %dpx %dpx;\n"
                             "}\n\n"
                             , lvalue, rvalue, bvalue, tvalue
-                            , texture.toUtf8().constData()
+                            , QFileInfo(texture).completeBaseName().toUtf8().constData()
                             , tinfo.fileName().toUtf8().constData(), l, b+h-tvalue, l+lvalue, b+h
                             , tinfo.fileName().toUtf8().constData(), l+lvalue, b+h-tvalue, l+w-rvalue, b+h
                             , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b+h-tvalue, l+w, b+h
@@ -1905,10 +1905,10 @@ void Rockete::updateTextureInfoFiles()
                     ".%s {\n"
                     "  width: %d;\n"
                     "  height: %d;\n"
-                    "  icon-decorator: image;\n"
-                    "  icon-image: %s %d %d %d %d;\n"
+                    "  background-decorator: image;\n"
+                    "  background-image: %s %d %d %d %d;\n"
                     "}\n\n"
-                    , texture.toUtf8().constData()
+                    , QFileInfo(texture).completeBaseName().toUtf8().constData()
                     , rc.width(), rc.height()
                     , tinfo.fileName().toUtf8().constData()
                     , rc.left(), rc.top(), rc.right(), rc.bottom()
