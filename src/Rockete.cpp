@@ -774,10 +774,10 @@ void Rockete::fileTreeDoubleClicked(QTreeWidgetItem *item, int /*column*/)
 void Rockete::fileTreeClicked(QTreeWidgetItem *item, int /*column*/)
 {
     QClipboard *clipboard = QApplication::clipboard();
-    if(item->text(1).endsWith("png")||item->text(1).endsWith("jpg")) // no native support for tga
+    QString data = item->data(1, Qt::UserRole).toString(); // check for texture subimages
+    if(item->text(1).endsWith("png")||item->text(1).endsWith("jpg")||data.length()) // no native support for tga
     {
         if (ui.tabWidgetDoc->currentIndex() != kTexturePreviewTabIndex) ui.texturePreviewLabel->updateGeometry(); // update size of preview if it is hidden
-        QString data = item->data(1, Qt::UserRole).toString();
         QString key;
         if (data.length()) {
             QString texture = item->data(0, Qt::UserRole).toString();
@@ -1703,9 +1703,9 @@ QString Rockete::readSpriteSheetInfo(QTreeWidgetItem *item, const QString &textu
         int index;
         char tname[256];
         unsigned left;
-        unsigned top;
-        unsigned right;
         unsigned bottom;
+        unsigned right;
+        unsigned top;
         unsigned w, h;
         float left_r;
         float right_r;
@@ -1719,13 +1719,13 @@ QString Rockete::readSpriteSheetInfo(QTreeWidgetItem *item, const QString &textu
                  /*  1 */ &index,
                  /*  2 */ tname,
                  /*  3 */ &left,
-                 /*  4 */ &top,
+                 /*  4 */ &bottom,
                  /*  5 */ &right,
-                 /*  6 */ &bottom,
+                 /*  6 */ &top,
                  /*  7 */ &left_r,
-                 /*  8 */ &top_r,
+                 /*  8 */ &bottom_r,
                  /*  9 */ &right_r,
-                 /* 10 */ &bottom_r,
+                 /* 10 */ &top_r,
                  /* 11 */ &w,
                  /* 12 */ &h,
                  /* 13 */ &width_r,
@@ -1734,15 +1734,16 @@ QString Rockete::readSpriteSheetInfo(QTreeWidgetItem *item, const QString &textu
                  /* 16 */ &bpp );
         if (pnum > 4) {
             QTreeWidgetItem *new_item = new QTreeWidgetItem(item);
-            QImage copy = image.copy( left, top, right-left, bottom-top);
+            QImage copy = image.copy( left, bottom, right-left, top-bottom);
             new_item->setIcon(0, QPixmap::fromImage(copy));
             new_item->setText(1, tname);
             new_item->setToolTip(1, QString("%1:%2").arg(QFileInfo(texture).fileName()).arg(tname));
-            QString data = QString("%1px %2px %3px %4px").arg(left).arg(top).arg(right-left).arg(bottom-top);
+
+            QString data = QString("%1px %2px %3px %4px").arg(left).arg(bottom).arg(right-left).arg(top-bottom);
             new_item->setData(0, Qt::UserRole, texture);
             new_item->setData(1, Qt::UserRole, data);
 
-            texturesAtlasInf[tinfo.absoluteFilePath()][tname] = QRect(left, top, right-left, bottom-top); // update texture atlas info
+            texturesAtlasInf[tinfo.absoluteFilePath()][tname] = QRect(left, bottom, right-left, top-bottom); // update texture atlas info
 
             valid_found = true;
         }
@@ -1797,21 +1798,37 @@ format2:
     if (!result.isValid())
         goto format3;
     else {
-        const QVariantMap &map = result.toMap();
-        if (map.contains("frames")) {
+        valid_found = false;
+
+        const QVariantMap &map = result.toMap(); if (map.contains("frames")) {
             const QVariantMap &frames = map["frames"].toMap();
             foreach(const QString &tname, frames.keys()) {
                 const QVariantMap &frame = frames.value(tname).toMap();
-                qDebug() << frame;
-                QTreeWidgetItem *new_item = new QTreeWidgetItem(item);
-                new_item->setText(1, tname);
-                new_item->setToolTip(1, QString("%1:%2").arg(QFileInfo(texture).fileName()).arg(tname));
-                valid_found = true;
+                const QString rect_s = frame["frame"].toString();
+                int l, b, w, h, pnum = sscanf( rect_s.toUtf8().constData(), "{{%d,%d},{%d,%d}}", &l, &b, &w, &h); if (pnum != 4)
+                    qInfo("Invalid rect data %s", rect_s.toUtf8().constEnd());
+                else {
+                    QTreeWidgetItem *new_item = new QTreeWidgetItem(item);
+                    QImage copy = image.copy( l, b, w, h);
+                    new_item->setText(1, tname);
+                    new_item->setIcon(0, QPixmap::fromImage(copy));
+                    new_item->setToolTip(1, QString("%1:%2").arg(QFileInfo(texture).fileName()).arg(tname));
+
+                    QString data = QString("%1px %2px %3px %4px").arg(l).arg(b).arg(w).arg(h);
+                    new_item->setData(0, Qt::UserRole, texture);
+                    new_item->setData(1, Qt::UserRole, data);
+
+                    texturesAtlasInf[tinfo.absoluteFilePath()][tname] = QRect(l, b, w, h); // update texture atlas info
+
+                    valid_found = true;
+                }
             }
         }
     }
-
-    valid_found = false;
+    if (valid_found) {
+        item->setIcon(0, QIcon(":/images/icon_atlas.png"));
+        return plist_filename;
+    } // if no valid entry found, continue with next format
 
     // ;Sprite Monkey Coordinates, UTF-8
     // ;Transparency, Sprite Sheet Name, Image Width, Image Height
