@@ -153,10 +153,10 @@ inline char *f_ssprintf(const char *format, va_list args) {
    return _ss_ret;
 }
 
-# define qInfo(...) { int _ss_size = _snprintf(0, 0, ##__VA_ARGS__);    \
+# define qInfo(...) do { int _ss_size = _snprintf(0, 0, ##__VA_ARGS__);    \
     char *_ss_ret = (char*)alloca(_ss_size+1);                          \
     _snprintf(_ss_ret, _ss_size+1, ##__VA_ARGS__);                      \
-    Rockete::instance->logMessage(_ss_ret); }
+    Rockete::instance->logMessage(_ss_ret); } while(0)
 
 #else
 
@@ -166,9 +166,9 @@ inline char *f_ssprintf(const char *format, va_list args) {
     snprintf(_ss_ret, _ss_size+1, ##__VA_ARGS__);       \
     _ss_ret; })
 
-# define qInfo(...) { const char *b = ({ int _ss_size = snprintf(0, 0, ##__VA_ARGS__);  \
+# define qInfo(...) do { const char *b = ({ int _ss_size = snprintf(0, 0, ##__VA_ARGS__);  \
     char *_ss_ret = (char*)alloca(_ss_size+1);                                          \
     snprintf(_ss_ret, _ss_size+1, ##__VA_ARGS__);                                       \
-    _ss_ret; }); Rockete::instance->logMessage(b); }
+    _ss_ret; }); Rockete::instance->logMessage(b); } while(0)
 #endif
 #endif // ROCKETE_H

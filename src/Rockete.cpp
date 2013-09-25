@@ -546,15 +546,18 @@ void Rockete::codeTabRequestClose(int index)
     int
         response;
 
-    if(ui.codeTabWidget->tabText(index).contains("*"))
+    QString changed_outside = fileChangedOutsideArray[index]; // handle outside changes
+    fileChangedOutsideArray.remove(index);
+
+    if(ui.codeTabWidget->tabText(index).contains("*") || !changed_outside.isEmpty()) // if changed in the app or outside
     {
         OpenedFile *file = qobject_cast<OpenedFile *>(ui.codeTabWidget->widget(0));
         QString question;
         question = "Save ";
-        question += file->fileInfo.absoluteFilePath();
+        question += file->fileInfo.fileName();
         question += " before closing?";
 
-        response = QMessageBox::question(this, "file modified", question, QMessageBox::Yes, QMessageBox::No, QMessageBox::Cancel);
+        response = QMessageBox::question(this, "file modified/changed", question, QMessageBox::Yes, QMessageBox::No, QMessageBox::Cancel);
     }
     else // if we have no changes, save anyway. I don't want changes to be lost if rockete simply didn't detect a change
     {
@@ -868,7 +871,8 @@ void Rockete::spinCuttingChanged(int value)
     const QString file =  ui.labelCuttingDim->property("texture file").toString();
     QString inf = QString("%1;%2;%3;%4").arg(ui.spinCuttingLeftCap->value()).arg(ui.spinCuttingTopCap->value()).arg(ui.spinCuttingRightCap->value()).arg(ui.spinCuttingBottomCap->value());
     const QString key =  ui.labelCuttingDim->property("texture key").toString();
-    ProjectManager::getInstance().setCuttingInfo(key, inf); // safe cutting info for this texture
+    ProjectManager::getInstance().setCuttingInfo(key, inf); // save cutting info for this texture
+    updateTextureInfoFiles(); // regenerate styles file with new info
 }
 
 void Rockete::updateCuttingInfo(int lvalue, int tvalue, int rvalue, int bvalue)
@@ -1354,13 +1358,13 @@ void Rockete::changeEvent(QEvent *event)
     if(event->type() == QEvent::ActivationChange && isActiveWindow() && !fileChangedOutsideArray.isEmpty())
     {
         int new_tab_index;
-        int current_index = ui.codeTabWidget->currentIndex();
+        const int current_index = ui.codeTabWidget->currentIndex();
         QMapIterator<int, QString> i(fileChangedOutsideArray);
         while (i.hasNext())
         {
             i.next();
             fileChangedOutsideArray.remove(i.key());
-            if( QMessageBox::question(this, "Rockete: file change detected", i.value() + " has been modified,\ndo you want to reload it?", QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
+            if( QMessageBox::question(this, "Rockete: file change detected", QFileInfo(i.value()).fileName() + " has been modified,\ndo you want to reload it?", QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
             {
                 QFileInfo file_info = i.value();
                 QWidget *widget;
@@ -1391,7 +1395,7 @@ void Rockete::closeEvent(QCloseEvent *event)
             OpenedFile *file = qobject_cast<OpenedFile *>(ui.codeTabWidget->widget(0));
             QString question;
             question = "Save ";
-            question += file->fileInfo.absoluteFilePath();
+            question += file->fileInfo.fileName();
             question += " before closing?";
 
             response = QMessageBox::question(this, "file modified", question, QMessageBox::Yes, QMessageBox::No, QMessageBox::Cancel);
@@ -1787,9 +1791,26 @@ QString Rockete::readSpriteSheetInfo(QTreeWidgetItem *item, const QString &textu
 format2:
     // 2. cocos2d plist info:
     QString plist_filename = tinfo.absolutePath()+QDir::separator()+QString(tinfo.completeBaseName()+".plist");
-    FILE *plist_file = fopen( plist_filename.toUtf8().constData(), "r" );
-    if (!plist_file)
+    QFile plistf(plist_filename);
+    PListParser plist;
+    const QVariant &result = plist.parsePList(&plistf);
+    if (!result.isValid())
         goto format3;
+    else {
+        const QVariantMap &map = result.toMap();
+        if (map.contains("frames")) {
+            const QVariantMap &frames = map["frames"].toMap();
+            foreach(const QString &tname, frames.keys()) {
+                const QVariantMap &frame = frames.value(tname).toMap();
+                qDebug() << frame;
+                QTreeWidgetItem *new_item = new QTreeWidgetItem(item);
+                new_item->setText(1, tname);
+                new_item->setToolTip(1, QString("%1:%2").arg(QFileInfo(texture).fileName()).arg(tname));
+                valid_found = true;
+            }
+        }
+    }
+
     valid_found = false;
 
     // ;Sprite Monkey Coordinates, UTF-8
@@ -1835,7 +1856,7 @@ void Rockete::updateTextureInfoFiles()
 
         FILE *css_file = fopen( css_filename.toUtf8().constData(), "w" );
         if (!css_file)
-            qInfo("Failed to open %s file.", css_filename.toUtf8().constData())
+            qInfo("Failed to open %s file.", css_filename.toUtf8().constData());
         else {
             fprintf(css_file, "/* Autogenerated file. DO NOT MODIFY - WILL BE OVERWRITTEN! */\n\n");
             foreach(const QString &texture, atlas.keys()) {
@@ -1849,11 +1870,13 @@ void Rockete::updateTextureInfoFiles()
                             "/* cutting: %d|%d|%d|%d */\n"
                             ".%s {\n"
                             "  background-decorator: tiled-horizontal;\n"
+                            "  background-decorator-id: %s;\n"
                             "  background-left-image: %s %dpx %dpx %dpx %dpx;\n"
                             "  background-center-image: %s %dpx %dpx %dpx %dpx;\n"
                             "  background-right-image: %s %dpx %dpx %dpx %dpx;\n"
                             "}\n\n"
                             , lvalue, rvalue, bvalue, tvalue
+                            , QFileInfo(texture).completeBaseName().toUtf8().constData()
                             , QFileInfo(texture).completeBaseName().toUtf8().constData()
                             , tinfo.fileName().toUtf8().constData(), l, b, l+lvalue, b+h
                             , tinfo.fileName().toUtf8().constData(), l+lvalue, b, l+w-rvalue, b+h
@@ -1864,11 +1887,13 @@ void Rockete::updateTextureInfoFiles()
                             "/* cutting: %d|%d|%d|%d */\n"
                             ".%s {\n"
                             "  background-decorator: tiled-vertical;\n"
+                            "  background-decorator-id: %s;\n"
                             "  background-bottom-image: %s %dpx %dpx %dpx %dpx;\n"
                             "  background-bottom-image: %s %dpx %dpx %dpx %dpx;\n"
                             "  background-bottom-image: %s %dpx %dpx %dpx %dpx;\n"
                             "}\n\n"
                             , lvalue, rvalue, bvalue, tvalue
+                            , QFileInfo(texture).completeBaseName().toUtf8().constData()
                             , QFileInfo(texture).completeBaseName().toUtf8().constData()
                             , tinfo.fileName().toUtf8().constData(), l, b+h-tvalue, l+w, b+h
                             , tinfo.fileName().toUtf8().constData(), l, b+bvalue, l+w, b+h-tvalue
@@ -1879,6 +1904,7 @@ void Rockete::updateTextureInfoFiles()
                             "/* cutting: %d|%d|%d|%d */\n"
                             ".%s {\n"
                             "  background-decorator: tiled-box;\n"
+                            "  background-decorator-id: %s;\n"
                             "  background-bottom-left-image: %s %dpx %dpx %dpx %dpx;\n"
                             "  background-bottom-image: %s %dpx %dpx %dpx %dpx;\n"
                             "  background-bottom-right-image: %s %dpx %dpx %dpx %dpx;\n"
@@ -1890,6 +1916,7 @@ void Rockete::updateTextureInfoFiles()
                             "  background-top-right-image: %s %dpx %dpx %dpx %dpx;\n"
                             "}\n\n"
                             , lvalue, rvalue, bvalue, tvalue
+                            , QFileInfo(texture).completeBaseName().toUtf8().constData()
                             , QFileInfo(texture).completeBaseName().toUtf8().constData()
                             , tinfo.fileName().toUtf8().constData(), l, b+h-tvalue, l+lvalue, b+h
                             , tinfo.fileName().toUtf8().constData(), l+lvalue, b+h-tvalue, l+w-rvalue, b+h
@@ -1903,13 +1930,15 @@ void Rockete::updateTextureInfoFiles()
                         );
                 } else fprintf(css_file,
                     ".%s {\n"
-                    "  width: %d;\n"
-                    "  height: %d;\n"
+                    "  width: %dpx;\n"
+                    "  height: %dpx;\n"
                     "  background-decorator: image;\n"
-                    "  background-image: %s %d %d %d %d;\n"
+                    "  background-decorator-id: %s;\n"
+                    "  background-image: %s %dpx %dpx %dpx %dpx;\n"
                     "}\n\n"
                     , QFileInfo(texture).completeBaseName().toUtf8().constData()
                     , rc.width(), rc.height()
+                    , QFileInfo(texture).completeBaseName().toUtf8().constData()
                     , tinfo.fileName().toUtf8().constData()
                     , rc.left(), rc.top(), rc.right(), rc.bottom()
                 );
@@ -2031,6 +2060,7 @@ void Rockete::closeTab(int index, bool must_save)
     if(must_save)
         file->save();
     qInfo("removing path: %s\n", file->fileInfo.filePath().toAscii().data());
+    fileChangedOutsideArray.remove(index);
     fileWatcher->removePath(file->fileInfo.filePath());
 
     if(doc)
@@ -2048,7 +2078,6 @@ void Rockete::closeTab(int index, bool must_save)
 
 void Rockete::addRulers()
 {
-    //setViewportMargins(RULER_BREADTH,RULER_BREADTH,0,0);
     QGridLayout *layout = (QGridLayout*)ui.renderingViewBack->layout();
 
     layout->removeWidget(ui.renderingView);

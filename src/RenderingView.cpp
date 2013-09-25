@@ -159,7 +159,7 @@ void RenderingView::paintGL()
     glDisable(GL_TEXTURE_2D);
 
     drawAxisGrid();
-    RenderGrid(RocketSystem::getInstance().getContext()->GetDimensions().x, RocketSystem::getInstance().getContext()->GetDimensions().y, GraphicSystem::scaleFactor, 10, 10, 2, true);
+    RenderGrid(RocketSystem::getInstance().getContext()->GetDimensions().x, RocketSystem::getInstance().getContext()->GetDimensions().y, GraphicSystem::scaleFactor, 10, 10, 4, true);
 
     RocketSystem::getInstance().getContext()->Render();
 

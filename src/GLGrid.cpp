@@ -40,9 +40,9 @@ void RenderGrid(int main_window_width, int main_window_height, float scale, int 
     glEnable(GL_BLEND);
 
     /* Subdivisions */    
-    glColor4f(0, 0, 0, 0.5);
-    glLineStipple(0, 0x8888);
-    glEnable(GL_LINE_STIPPLE); glBegin(GL_LINES);
+    glColor4f(0, 0, 0, 0.25);
+    // glLineStipple(0, 0x8888); glEnable(GL_LINE_STIPPLE);
+    glBegin(GL_LINES);
     {
         /* Horizontal lines. */
         float stepx = float(main_window_height) / float(rows*subdivs);
@@ -61,7 +61,7 @@ void RenderGrid(int main_window_width, int main_window_height, float scale, int 
     glEnd(); glDisable(GL_LINE_STIPPLE);
 
     /* Regular grid */
-    glColor4f(0, 0, 0, 0.5);
+    glColor4f(0, 0, 0, 0.25);
     glBegin(GL_LINES);
     {
         /* Horizontal lines. */
@@ -80,7 +80,7 @@ void RenderGrid(int main_window_width, int main_window_height, float scale, int 
     }
     glEnd();
     /* Borders */
-    glColor4f(0, 0, 0, 0.25);
+    glColor4f(0, 0, 0, 0.2);
     glLineWidth(2.5); glBegin(GL_LINES);
     {
         { glVertex2f(0, 0); glVertex2f(main_window_width, 0); }
