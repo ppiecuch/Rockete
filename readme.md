@@ -2,10 +2,10 @@
 
 ## New changelog and development progress
 
-1. New project management options
-2. Texture atlas support
-3. New texture atlas preview
-4. New fonts preview
+1. New project management options: the project can now be created, saved and open. It contains informations about paths and cutting info for every image.
+2. Texture atlas support: if along with a texture, there is a texture info file (in my own format or cocos2d plist) it is used and you can see all elements of the atlas in the file tree view. Additionaly, for every atlas, an rcss file is created with proper decorators.
+3. New texture atlas preview: images and sprites from atlas can be preview now.
+4. New fonts preview: read fonts can be preview now.
 
 
 -- ORIGINAL readme.md --
