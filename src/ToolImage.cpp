@@ -91,7 +91,7 @@ void ToolImage::onMousePress(const Qt::MouseButton /*button*/, const Vector2f &/
             QString imageName;
             if (getImageNameFromFileSystem(imageName)) {
                 Rocket::Core::XMLAttributes attributes;
-                attributes.Set("src", imageName.toAscii().data());
+                attributes.Set("src", imageName.toLatin1().data());
                 Element *img = Rocket::Core::Factory::InstanceElement(NULL, "img", "img", attributes);
                 insertNew(img, element);
             }
@@ -125,7 +125,7 @@ void ToolImage::onFileDrop(const QString &url)
             element = ToolDiv::getDivParent(element);
             if (element) {
                 Rocket::Core::XMLAttributes attributes;
-                attributes.Set("src", fileInfo.fileName().toAscii().data());
+                attributes.Set("src", fileInfo.fileName().toLatin1().data());
                 Element* img = Rocket::Core::Factory::InstanceElement(NULL, "img", "img", attributes);
                 insertNew(img, element);
             }

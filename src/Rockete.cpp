@@ -37,7 +37,7 @@
 const int kTexturePreviewTabIndex = 1;
 const int kCuttingImagePreviewTabIndex = 1;
 
-void logMessageOutput( QtMsgType type, const char *msg );
+void logMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &amsg );
 
 struct LocalScreenSizeItem
 {
@@ -61,48 +61,50 @@ struct LocalScreenSizeItem
 };
 
 // new global log/message handler:
-void logMessageOutput( QtMsgType type, const char *msg )
+void logMessageOutput( QtMsgType type, const QMessageLogContext &context, const QString &amsg )
 {
-        QString sMsg = msg;
-        if(sMsg.isEmpty()) return;
-        if(sMsg.length() >= 8195) sMsg.truncate(8195);
+        Q_UNUSED(context)
+
+        QString msg = amsg;
+        if(msg.isEmpty()) return;
+        if(msg.length() >= 8195) msg.truncate(8195);
 
         Rockete *mw = Rockete::instance;
 
 #if defined(Q_CC_MSVC) || defined(Q_CC_MSVC_NET)
-        OutputDebugString( (sMsg + "\n"). unicode() );
+        OutputDebugString( (msg + "\n").unicode() );
 #endif
 
-        QTextDocument text; text.setPlainText(sMsg); sMsg = text.toHtml(); // make special chars printable in html
+        QTextDocument text; text.setPlainText(msg); msg = text.toHtml(); // make special chars printable in html
         switch ( type )
         {
         case QtDebugMsg:
-                fprintf( stderr, "%s Debug: %s \n", QTime::currentTime().toString().toAscii().data(), msg );
-                sMsg = "<font color=black><small>"+sMsg+"</small></font>";
-                mw->logMessage(""+sMsg);
+                fprintf( stderr, "%s Debug: %s \n", QTime::currentTime().toString().toLatin1().constData(), msg.toUtf8().constData() );
+                msg = "<font color=black><small>"+msg+"</small></font>";
+                mw->logMessage(msg);
                 break;
         case QtCriticalMsg:
-                fprintf( stderr, "%s Critical: %s \n", QTime::currentTime().toString().toAscii().data(), msg );
-                sMsg = "<font color=red><b>Critical: "+sMsg+"</></font>";
-                mw->logMessage(sMsg);
+                fprintf( stderr, "%s Critical: %s \n", QTime::currentTime().toString().toLatin1().constData(), msg.toUtf8().constData() );
+                msg = "<font color=red><b>Critical: "+msg+"</></font>";
+                mw->logMessage(msg);
                 break;
         case QtWarningMsg:
-                fprintf( stderr, "%s Warning: %s \n", QTime::currentTime().toString().toAscii().data(), msg );
-                sMsg = "<font color=blue><small><b>Warning:</b> "+sMsg+"</small></font>";
-                mw->logMessage(sMsg);
+                fprintf( stderr, "%s Warning: %s \n", QTime::currentTime().toString().toLatin1().constData(), msg.toUtf8().constData() );
+                msg = "<font color=blue><small><b>Warning:</b> "+msg+"</small></font>";
+                mw->logMessage(msg);
                 break;
         case QtFatalMsg:
-                fprintf( stderr, "%s Fatal: %s \n", QTime::currentTime().toString().toAscii().data(), msg );
-                mw->logMessage("<big><b>Fatal: "+sMsg+"</b></big>");
+                fprintf( stderr, "%s Fatal: %s \n", QTime::currentTime().toString().toLatin1().constData(), msg.toUtf8().constData() );
+                mw->logMessage("<big><b>Fatal: "+msg+"</b></big>");
                 abort();
         }
 }
 
 
-Rockete::Rockete(QWidget *parent, Qt::WFlags flags)
+Rockete::Rockete(QWidget *parent, Qt::WindowFlags flags)
     : QMainWindow(parent, flags), isReloadingFile(false)
 {
-    qInstallMsgHandler( logMessageOutput );
+    qInstallMessageHandler( logMessageOutput );
 
     loadPlugins();
 
@@ -166,7 +168,7 @@ Rockete::Rockete(QWidget *parent, Qt::WFlags flags)
 
     if( QApplication::arguments().count() > 1 )
     {
-        openProject(QApplication::arguments()[1].toAscii().data());
+        openProject(QApplication::arguments()[1].toUtf8().data());
     }
     else if(!Settings::getProject().isEmpty() && QFile::exists(Settings::getProject()))
     {
@@ -288,9 +290,9 @@ void Rockete::fillAttributeView()
         attributeTreeModel->setupData(getCurrentDocument(), getCurrentDocument()->selectedElement);
         ui.attributeTreeView->reset();
         ui.attributeTreeView->setModel(attributeTreeModel);
-        ui.attributeTreeView->header()->setResizeMode(0, QHeaderView::ResizeToContents);
-        ui.attributeTreeView->header()->setResizeMode(1, QHeaderView::Stretch);
-        ui.attributeTreeView->header()->setResizeMode(2, QHeaderView::ResizeToContents);
+        ui.attributeTreeView->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+        ui.attributeTreeView->header()->setSectionResizeMode(1, QHeaderView::Stretch);
+        ui.attributeTreeView->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
         ui.attributeTreeView->header()->setStretchLastSection(false);
     }
 }
@@ -303,8 +305,8 @@ void Rockete::fillPropertyView()
         ui.propertyTreeView->reset();
         ui.propertyTreeView->setModel(propertyTreeModel);
         ui.propertyTreeView->expandAll();
-        ui.propertyTreeView->header()->setResizeMode(0, QHeaderView::ResizeToContents);
-        ui.propertyTreeView->header()->setResizeMode(1, QHeaderView::Stretch);
+        ui.propertyTreeView->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+        ui.propertyTreeView->header()->setSectionResizeMode(1, QHeaderView::Stretch);
         //ui.propertyTreeView->header()->setResizeMode(2, QHeaderView::ResizeToContents);
         //ui.propertyTreeView->header()->setStretchLastSection(false);
     }
@@ -473,7 +475,7 @@ void Rockete::menuSaveProjectClicked()
 void Rockete::menuReloadProjectClicked()
 {
     if (QFile::exists(projectFile))
-        openProject(projectFile.toAscii().constData());
+        openProject(projectFile.toUtf8().constData());
     else
         newProject();
 }
@@ -782,11 +784,11 @@ void Rockete::fileTreeClicked(QTreeWidgetItem *item, int /*column*/)
         if (data.length()) {
             QString texture = item->data(0, Qt::UserRole).toString();
             QImage image(texture);
-            int l=0,b=0,w=0,h=0; int n = sscanf(data.toAscii().constData(), "%dpx %dpx %dpx %dpx", &l, &b, &w, &h); if (n!=4)
+            int l=0,b=0,w=0,h=0; int n = sscanf(data.toLatin1().constData(), "%dpx %dpx %dpx %dpx", &l, &b, &w, &h); if (n!=4)
                 qWarning() << "Invalid format: " << data;
             selectedTexture = image.copy( l, b, w, h);
             selectedTexture.save(selectedTextureTmp.fileName(), "png");
-            ui.texturePreviewLabel->setPixmap(QPixmap::fromImage(selectedTexture.scaled(QSize(ui.texturePreviewLabel->width(),ui.texturePreviewLabel->height()),Qt::KeepAspectRatio)));
+            ui.texturePreviewLabel->setPixmap(QPixmap::fromImage(selectedTexture.scaled(QSize(ui.texturePreviewLabel->width(),ui.texturePreviewLabel->height()),Qt::KeepAspectRatio,Qt::SmoothTransformation)));
             QString file = QFileInfo(texture).fileName();
             clipboard->setText(file + " " + QString("%1px %2px %3px %4px").arg(l).arg(b).arg(l+w).arg(b+h)); // place texture coordinates in clipboard
             updateCuttingTab(file, item->text(1), l, b, w, h); // flip y for bottom-left origin
@@ -794,7 +796,7 @@ void Rockete::fileTreeClicked(QTreeWidgetItem *item, int /*column*/)
         } else {
             selectedTexture = QImage( getPathForFileName(item->text(1)) );
             selectedTexture.save(selectedTextureTmp.fileName(), "png");
-            ui.texturePreviewLabel->setPixmap(QPixmap::fromImage(selectedTexture.scaled(QSize(ui.texturePreviewLabel->width(),ui.texturePreviewLabel->height()),Qt::KeepAspectRatio)));
+            ui.texturePreviewLabel->setPixmap(QPixmap::fromImage(selectedTexture.scaled(QSize(ui.texturePreviewLabel->width(),ui.texturePreviewLabel->height()),Qt::KeepAspectRatio,Qt::SmoothTransformation)));
             clipboard->setText(item->text(1)); // place filename in clipboard
             updateCuttingTab(item->text(1), "", 0, 0, selectedTexture.width(), selectedTexture.height());
             key = item->text(1);
@@ -841,10 +843,10 @@ void Rockete::fileTreeClicked(QTreeWidgetItem *item, int /*column*/)
     }
 }
 
-void Rockete::resizeTexturePreview(QResizeEvent * event)
+void Rockete::resizeTexturePreview(QResizeEvent * /*event*/)
 {
     if (!selectedTexture.isNull()) {
-        ui.texturePreviewLabel->setPixmap(QPixmap::fromImage(selectedTexture.scaled(QSize(ui.texturePreviewLabel->width(),ui.texturePreviewLabel->height()),Qt::KeepAspectRatio)));
+        ui.texturePreviewLabel->setPixmap(QPixmap::fromImage(selectedTexture.scaled(QSize(ui.texturePreviewLabel->width(),ui.texturePreviewLabel->height()),Qt::KeepAspectRatio,Qt::SmoothTransformation)));
     }
 }
 
@@ -865,7 +867,7 @@ void Rockete::updateCuttingTab(const QString &file, const QString &texture, int 
     ui.spinCuttingTopCap->setMaximum(floor(h/2.));
 }
 
-void Rockete::spinCuttingChanged(int value)
+void Rockete::spinCuttingChanged(int /*value*/)
 {
     updateCuttingInfo(ui.spinCuttingLeftCap->value(), ui.spinCuttingTopCap->value(), ui.spinCuttingRightCap->value(), ui.spinCuttingBottomCap->value());
     const QString file =  ui.labelCuttingDim->property("texture file").toString();
@@ -878,7 +880,7 @@ void Rockete::spinCuttingChanged(int value)
 void Rockete::updateCuttingInfo(int lvalue, int tvalue, int rvalue, int bvalue)
 {
     int l, b, w, h;
-    int n = sscanf(ui.labelCuttingDim->text().toAscii().constData(), "x:%dpx y:%dpx w:%dpx h:%dpx", &l, &b, &w, &h); if (n!=4) {
+    int n = sscanf(ui.labelCuttingDim->text().toLatin1().constData(), "x:%dpx y:%dpx w:%dpx h:%dpx", &l, &b, &w, &h); if (n!=4) {
         ui.cuttingLog->append(QString("<font color=red>Invalid data format.</font color=red><br/>"));
     } else {
         if (lvalue != 0 || tvalue != 0 || rvalue != 0 || bvalue != 0) {
@@ -926,7 +928,7 @@ void Rockete::updateCuttingInfo(int lvalue, int tvalue, int rvalue, int bvalue)
                     "border-width: %2px %3px %4px %5px;"
                     "border-image: url('%1') %2 %3 %4 %5 stretch stretch;").arg(selectedTextureTmp.fileName()).arg(tvalue).arg(rvalue).arg(bvalue).arg(lvalue) /* top, right, bottom, left */
                     );
-                float aspect = (float)w/(float)h;
+                // float aspect = (float)w/(float)h;
                 if (h>w) {
                     // disable vertical spacers:
                     ui.verticalSpacer1->changeSize(0, 0, QSizePolicy::Ignored, QSizePolicy::Ignored);
@@ -952,7 +954,7 @@ void Rockete::updateCuttingInfo(int lvalue, int tvalue, int rvalue, int bvalue)
     }
 }
 
-void Rockete::resizeCuttingPreview(QResizeEvent * event)
+void Rockete::resizeCuttingPreview(QResizeEvent * /*event*/)
 {
     // resize mask view:
     //labelCuttingMask->setGeometry(ui.labelCuttingPreview->geometry());
@@ -960,7 +962,7 @@ void Rockete::resizeCuttingPreview(QResizeEvent * event)
     labelCuttingMask->setGeometry(origin.x(), origin.y(), ui.labelCuttingPreview->geometry().width(), ui.labelCuttingPreview->geometry().height());
 }
 
-void Rockete::cuttingPrevSizeChanged(int value)
+void Rockete::cuttingPrevSizeChanged(int /*value*/)
 {
 }
 
@@ -1040,7 +1042,7 @@ void Rockete::documentHierarchyDoubleClicked(QTreeWidgetItem *item, int/* column
 
         foreach(QString search_string, strings_to_find) {
             foreach (QString file, rcssList) {
-                OpenedFile *opened_file = getOpenedFile(file.toAscii().data(), true);
+                OpenedFile *opened_file = getOpenedFile(file.toUtf8().data(), true);
 
                 QTextCursor cursor = opened_file->textCursor();
                 cursor.clearSelection();
@@ -1048,7 +1050,7 @@ void Rockete::documentHierarchyDoubleClicked(QTreeWidgetItem *item, int/* column
 
                 if(opened_file->find(search_string) || opened_file->find(search_string, QTextDocument::FindBackward))
                 {
-                    ui.codeTabWidget->setCurrentIndex(getTabIndexFromFileName(opened_file->fileInfo.fileName().toAscii().data()));
+                    ui.codeTabWidget->setCurrentIndex(getTabIndexFromFileName(opened_file->fileInfo.fileName().toUtf8().data()));
                     //opened_file->cursorFind(search_string, true);
                     return;
                 }
@@ -1064,7 +1066,7 @@ void Rockete::documentHierarchyDoubleClicked(QTreeWidgetItem *item, int/* column
     QTextCursor cursor = getCurrentDocument()->textCursor();
     cursor.clearSelection();
     getCurrentDocument()->setTextCursor(cursor);
-    ui.codeTabWidget->setCurrentIndex(getTabIndexFromFileName(getCurrentDocument()->fileInfo.fileName().toAscii().data()));
+    ui.codeTabWidget->setCurrentIndex(getTabIndexFromFileName(getCurrentDocument()->fileInfo.fileName().toUtf8().data()));
 
     if(selectedTreeViewItem)
     {
@@ -1115,7 +1117,7 @@ void Rockete::documentHierarchyDoubleClicked(QTreeWidgetItem *item, int/* column
 void Rockete::fileHasChanged(const QString &path)
 {
     QFileInfo file_info = path;
-    int tab_index = getTabIndexFromFileName(file_info.fileName().toAscii().data());
+    int tab_index = getTabIndexFromFileName(file_info.fileName().toUtf8().data());
     fileChangedOutsideArray[tab_index] = path;
 }
 
@@ -1333,9 +1335,9 @@ void Rockete::removeSnippetClicked()
             QTreeWidgetItem *item = ui.projectFilesTreeWidget->findItems(file_name, Qt::MatchRecursive, 1).at(0);
             ui.projectFilesTreeWidget->findItems("Snippets", Qt::MatchRecursive).at(0)->removeChild(item);
         }
-        if(getTabIndexFromFileName(file_name.toAscii().data()) > -1)
+        if(getTabIndexFromFileName(file_name.toUtf8().data()) > -1)
         {
-            closeTab(getTabIndexFromFileName(file_name.toAscii().data()), false);
+            closeTab(getTabIndexFromFileName(file_name.toUtf8().data()), false);
         }
         QFile::remove(file_path);
     }
@@ -1371,7 +1373,7 @@ void Rockete::changeEvent(QEvent *event)
                 isReloadingFile = true;
                 closeTab(i.key(), false);
                 openFile(i.value());
-                new_tab_index = getTabIndexFromFileName(file_info.fileName().toAscii().data());
+                new_tab_index = getTabIndexFromFileName(file_info.fileName().toUtf8().data());
 
                 widget = ui.codeTabWidget->widget(new_tab_index);
                 ui.codeTabWidget->removeTab(new_tab_index);
@@ -1432,7 +1434,7 @@ int Rockete::openFile(const QString &filePath)
     if(filePath.contains("memory]")) //librocket name for files in memory is [document in memory] since its not opened in the tabs it tries to open it...
         return -1;
     if(file_info.suffix() == "rproj") {
-        openProject(file_info.absolutePath().toAscii().constData());
+        openProject(file_info.absolutePath().toUtf8().constData());
         return -1;
     }
     if(!file_info.exists())
@@ -1457,7 +1459,7 @@ int Rockete::openFile(const QString &filePath)
 
                 if(!file_info.exists())
                 {
-                    qWarning("file not found: %s\n", filePath.toAscii().data());
+                    qWarning("file not found: %s\n", filePath.toUtf8().data());
                     return -1;
                 }
             }
@@ -1479,19 +1481,19 @@ int Rockete::openFile(const QString &filePath)
 
     if (file_info.suffix() == "rml")
     {
-        new_tab_index = openDocument(file_info.filePath().toAscii().data());
+        new_tab_index = openDocument(file_info.filePath().toUtf8().data());
     }
     else if (file_info.suffix() == "rcss")
     {
-        new_tab_index = openStyleSheet(file_info.filePath().toAscii().data());
+        new_tab_index = openStyleSheet(file_info.filePath().toUtf8().data());
     }
     else if (file_info.suffix() == "lua")
     {
-        new_tab_index = openLuaScript(file_info.filePath().toAscii().data());
+        new_tab_index = openLuaScript(file_info.filePath().toUtf8().data());
     }
     else if (file_info.suffix() == "rproj" || file_info.suffix() == "txt" || file_info.suffix() == "snippet")
     {
-        new_tab_index = openASCIIFile(file_info.filePath().toAscii().data());
+        new_tab_index = openASCIIFile(file_info.filePath().toUtf8().data());
     }
     else
     {
@@ -1503,7 +1505,7 @@ int Rockete::openFile(const QString &filePath)
     {
         ui.codeTabWidget->setCurrentIndex(new_tab_index);
         ui.codeTabWidget->setTabToolTip(new_tab_index, file_info.absoluteFilePath());
-        qInfo("adding file: %s\n", file_info.filePath().toAscii().data());
+        qInfo("adding file: %s\n", file_info.filePath().toUtf8().data());
         fileWatcher->addPath(file_info.filePath());
         Settings::setMostRecentFile(file_info.filePath());
         generateMenuRecent();
@@ -2076,7 +2078,7 @@ void Rockete::closeTab(int index, bool must_save)
 
     if(must_save)
         file->save();
-    qInfo("removing path: %s\n", file->fileInfo.filePath().toAscii().data());
+    qInfo("removing path: %s\n", file->fileInfo.filePath().toUtf8().data());
     fileChangedOutsideArray.remove(index);
     fileWatcher->removePath(file->fileInfo.filePath());
 
@@ -2116,7 +2118,7 @@ void Rockete::addRulers()
     layout->update();
 }
 
-void Rockete::splitterMovedChanges(int pos, int index)
+void Rockete::splitterMovedChanges(int /* pos */, int /* index */)
 {
     QSplitter *splitter = (QSplitter*)sender();
     Settings::setSplitterState(splitter->objectName(), splitter->saveState());

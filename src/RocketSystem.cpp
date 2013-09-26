@@ -60,7 +60,7 @@ int RocketSystem::TranslateString(Rocket::Core::String& translated, const Rocket
 
         if(translated_string.isEmpty())
         {
-            printf("warning: could not find localization identifier \"%s\"\n", localization_identifier.toAscii().data() );
+            printf("warning: could not find localization identifier \"%s\"\n", localization_identifier.toLatin1().data() );
             translated = input;
             return 0;
         }
@@ -146,7 +146,7 @@ void RocketSystem::loadFonts(const QString &directory_path)
 void RocketSystem::loadFont(const QString &file)
 {
     Rocket::Core::String
-        r_string = file.toAscii().data();
+        r_string = file.toUtf8().data();
 
     #ifdef ROCKET_FREETYPE
         Rocket::Core::FreeType::FontProvider::LoadFontFace(r_string);

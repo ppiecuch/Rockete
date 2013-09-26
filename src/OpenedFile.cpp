@@ -6,6 +6,7 @@
 #include <QMessageBox>
 #include <QTextStream>
 #include "Rockete.h"
+#include "Settings.h"
 
 OpenedFile::OpenedFile()
     : highlighter(NULL)
@@ -22,7 +23,7 @@ void OpenedFile::initialize()
     setLineWrapMode(QPlainTextEdit::NoWrap);
     setTabChangesFocus(false);
 
-    document()->setDefaultFont(QFont("Courier",10));
+    document()->setDefaultFont(QFont(DEF_FONT_INFO));
     document()->setDocumentLayout(new QPlainTextDocumentLayout(document()));
 }
 
@@ -198,7 +199,7 @@ void OpenedFile::save()
         }
         else
         {
-            file.write(toPlainText().toAscii().data());
+            file.write(toPlainText().toUtf8().data());
         }
         file.close();
         document()->setModified( false );
@@ -235,7 +236,7 @@ void OpenedFile::saveAs(const QString &file_path)
         }
         else
         {
-            file.write(toPlainText().toAscii().data());
+            file.write(toPlainText().toUtf8().data());
         }
         file.close();
     }

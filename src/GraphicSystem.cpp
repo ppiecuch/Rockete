@@ -121,7 +121,7 @@ bool GraphicSystem::loadTexture(Rocket::Core::TextureHandle &texture_handle, Roc
 
             if(!final_file_info.exists())
             {
-                printf("texture not found: %s.\n", final_file_info.fileName().toAscii().data());
+                printf("texture not found: %s.\n", final_file_info.fileName().toLatin1().data());
             }
         }
     }
@@ -237,7 +237,7 @@ void GraphicSystem::drawTexturedBox(const Vector2f &origin, const Vector2f &dime
 unsigned char * GraphicSystem::loadTGA(const QString &path, Rocket::Core::Vector2i &texture_dimensions)
 {
     Rocket::Core::FileInterface *file_interface = Rocket::Core::GetFileInterface();
-    Rocket::Core::FileHandle file_handle = file_interface->Open(path.toAscii().data()); // TODO: switch to QT file handling
+    Rocket::Core::FileHandle file_handle = file_interface->Open(path.toLatin1().data()); // TODO: switch to QT file handling
 
     if (!file_handle)
         return NULL;

@@ -9,7 +9,7 @@
 #include "modeltest/modeltest.h"
 #endif
 
-#define PROPERTY_SET_ID -1
+#define PROPERTY_SET_ID (quintptr)-1
 
 PropertyTreeModel::PropertyTreeModel(QObject *parent)
 : QAbstractItemModel(parent)

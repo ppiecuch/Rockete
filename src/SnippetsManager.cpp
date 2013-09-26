@@ -179,7 +179,7 @@ QString SnippetsManager::addSnippet()
     </Code>\n\
 </CodeSnippet>";
 
-    file.write(content.toAscii().data());
+    file.write(content.toUtf8().data());
     file.close();
 
     Rockete::getInstance().openFile(text);

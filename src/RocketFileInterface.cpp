@@ -27,20 +27,20 @@ Rocket::Core::FileHandle RocketFileInterface::Open(const Rocket::Core::String& p
     }
     else
     {
-        printf("WARNING: libRocket looking for a file neither rml nor rcss nor lua: %s\n", real_path.toAscii().data());
+        printf("WARNING: libRocket looking for a file neither rml nor rcss nor lua: %s\n", real_path.toUtf8().data());
     }
 
     file_info = real_path;
 
     if(!file_info.exists())
     {
-        printf("WARNING: File not found %s. Search string: %s\n", file_info.filePath().toAscii().data(), path.CString());
+        printf("WARNING: File not found %s. Search string: %s\n", file_info.filePath().toUtf8().data(), path.CString());
     }
 
 
     // TODO: other places to look if its not in the project files ( like texture search)
 
-    return (Rocket::Core::FileHandle)fopen(real_path.toAscii().data(), "rb");
+    return (Rocket::Core::FileHandle)fopen(real_path.toUtf8().data(), "rb");
 }
 
 // Closes a previously opened file.

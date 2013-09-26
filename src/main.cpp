@@ -1,7 +1,7 @@
 #include "Rockete.h"
 #include <QDebug>
 #include <QDir>
-#include <QtGui/QApplication>
+#include <QApplication>
 #include "RocketSystem.h"
 #include "ToolManager.h"
 #include "EditionHelper.h"

@@ -6,6 +6,7 @@
 #include <QInputDialog>
 #include <QUrl>
 #include <QLabel>
+#include <QMimeData>
 #include "Rocket/Core/Types.h"
 #include "RocketSystem.h"
 #include "GraphicSystem.h"

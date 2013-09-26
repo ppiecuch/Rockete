@@ -105,7 +105,7 @@ void WizardButton::accept()
         return; // TODO: properly warn user
     }
 
-    Rockete::getInstance().openFile(styleSheetName.toAscii().data());
+    Rockete::getInstance().openFile(styleSheetName.toUtf8().data());
 
     OpenedStyleSheet *affectedStyleSheet = Rockete::getInstance().getCurrentTabStyleSheet();
     Q_ASSERT(affectedStyleSheet->fileInfo.fileName() == styleSheetName);

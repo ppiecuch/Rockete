@@ -100,7 +100,7 @@ protected:
         QWidget::mouseMoveEvent(event);
     }
 
-    void paintEvent(QPaintEvent* event)
+    void paintEvent(QPaintEvent* /*event*/)
     {
         QPainter painter(this);
         painter.setRenderHints(QPainter::TextAntialiasing);

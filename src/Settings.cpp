@@ -54,7 +54,7 @@ void Settings::setBackroundFileName(const QString &fileName)
 {
     Rocket::Core::Vector2i dimensions;
     
-    GraphicSystem::loadTexture( backgroundTextureHandle, dimensions, fileName.toAscii().data() );
+    GraphicSystem::loadTexture( backgroundTextureHandle, dimensions, fileName.toUtf8().data() );
     settings.setValue("File/BackgroundFileName", fileName);
 }
 

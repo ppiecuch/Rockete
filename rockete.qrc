@@ -29,5 +29,13 @@
         <file>images/grid.png</file>
         <file>images/border-image.png</file>
         <file>images/icon_rcss_auto.png</file>
+        <file>images/frame-android-medium.png</file>
+        <file>images/frame-android-small.png</file>
+        <file>images/frame-android-xsmall.png</file>
+        <file>images/frame-ipad.png</file>
+        <file>images/frame-iphone.png</file>
+        <file>images/frame-iphone5.png</file>
+        <file>images/frame-playbook.png</file>
+        <file>images/frame-z10.png</file>
     </qresource>
 </RCC>

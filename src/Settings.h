@@ -40,4 +40,6 @@ private:
     static Rocket::Core::TextureHandle backgroundTextureHandle;
 };
 
+#define DEF_FONT_INFO "Courier",10
+
 #endif

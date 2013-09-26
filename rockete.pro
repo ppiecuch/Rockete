@@ -1,9 +1,9 @@
 TEMPLATE = app
 TARGET = Rockete
 DESTDIR = ./debug
-QT += gui core opengl xml
-CONFIG += debug_and_release console qtestlib
-DEFINES += QT_LARGEFILE_SUPPORT QT_OPENGL_LIB
+QT += core widgets gui opengl xml testlib
+CONFIG += debug_and_release console testlib
+DEFINES += QT_OPENGL_LIB
 RESOURCES = rockete.qrc
 ICON = ./images/Icon.icns
 SOURCES += \

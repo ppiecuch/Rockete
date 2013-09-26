@@ -3,6 +3,7 @@
 #include <QDebug>
 #include <QScrollBar>
 #include <QStringListModel>
+#include <QMimeData>
 #include "Settings.h"
 #include "Rockete.h"
 #include "ProjectManager.h"
@@ -75,6 +76,7 @@ CodeEditor::CodeEditor() : QPlainTextEdit()
     PreviousHighlightedClosingTag.setY(0);
 
     lineNumberArea = new LineNumberArea(this);
+    lineNumberArea->setFont(QFont(DEF_FONT_INFO));
 
     connect(this, SIGNAL(blockCountChanged(int)), this, SLOT(updateLineNumberAreaWidth(int)));
     connect(this, SIGNAL(updateRequest(QRect,int)), this, SLOT(updateLineNumberArea(QRect,int)));
@@ -259,7 +261,7 @@ void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
     while (block.isValid() && top <= event->rect().bottom()) {
         if (block.isVisible() && bottom >= event->rect().top()) {
             QString number = QString::number(blockNumber + 1);
-            painter.setPen(Qt::black);
+            painter.setPen(Qt::darkGray);
             painter.drawText(0, top, lineNumberArea->width(), fontMetrics().height(),
                 Qt::AlignRight, number);
         }

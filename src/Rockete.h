@@ -2,7 +2,7 @@
 #define ROCKETE_H
 
 #include <stdarg.h>
-#include <QtGui/QMainWindow>
+#include <QMainWindow>
 #include <QFileSystemWatcher>
 #include <QLabel>
 #include <QTemporaryFile>
@@ -23,7 +23,7 @@ class Rockete : public QMainWindow
     Q_OBJECT
 
 public:
-    Rockete(QWidget *parent = 0, Qt::WFlags flags = 0);
+    Rockete(QWidget *parent = 0, Qt::WindowFlags flags = 0);
     ~Rockete();
     static Rockete & getInstance() {
         return *instance;

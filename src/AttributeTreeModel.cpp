@@ -53,7 +53,7 @@ bool AttributeTreeModel::setData(const QModelIndex &index, const QVariant &value
         return false;
 
     if (index.column() == 1) {
-        element->SetAttribute(propertyNameList[index.row()].toAscii().data(), value.toByteArray().data());
+        element->SetAttribute(propertyNameList[index.row()].toLatin1().data(), value.toByteArray().data());
 
         ActionManager::getInstance().applyNew(new ActionSetAttribute(document, element,propertyNameList[index.row()],propertyValueList[index.row()],value.toString()));
 
@@ -111,7 +111,7 @@ QModelIndex AttributeTreeModel::index(int row, int column, const QModelIndex &pa
 
 QModelIndex AttributeTreeModel::parent(const QModelIndex &index) const
 {
-    if (!index.isValid() || index.internalId() == -1)
+    if (!index.isValid() || (index.internalId() == (quintptr)-1)) // TODO: internalId() is unsigned
         return QModelIndex();
 
     return createIndex(index.internalId(),0,-1);

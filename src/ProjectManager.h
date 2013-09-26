@@ -9,7 +9,7 @@ struct CssCuttingInfo {
     int left, top, right, bottom;
     CssCuttingInfo() : left(0), top(0), right(0), bottom(0) { }
     CssCuttingInfo(int l, int t, int r, int b) : left(l), top(t), right(r), bottom(b) { }
-    CssCuttingInfo(const QString &inf) { int n = sscanf(inf.toAscii().constData(), "%d;%d;%d;%d", &left, &top, &right, &bottom); if (n!=4)
+    CssCuttingInfo(const QString &inf) { int n = sscanf(inf.toLatin1().constData(), "%d;%d;%d;%d", &left, &top, &right, &bottom); if (n!=4)
         qDebug() << "Invalid cutting data: " << inf;
     }
     operator const QString() const { return QString("%1;%2;%3;%4").arg(left).arg(top).arg(right).arg(bottom); }
