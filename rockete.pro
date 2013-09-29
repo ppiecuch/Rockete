@@ -48,6 +48,7 @@ SOURCES += \
  ./src/ToolTest.cpp \
  ./src/XMLHighlighter.cpp \
  ./src/WizardButton.cpp \
+ ./src/DocumentPreview.cpp \
  ./src/qtplist/PListParser.cpp \
  ./src/qtplist/PListSerializer.cpp
 
@@ -95,9 +96,13 @@ HEADERS += \
  ./src/ToolTest.h \
  ./src/XMLHighlighter.h \
  ./src/WizardButton.h \
+ ./src/DocumentPreview.h \
  ./src/qtplist/PListParser.h \
  ./src/qtplist/PListSerializer.h
-FORMS += ./ui/rockete.ui
+
+FORMS += \
+ ./ui/rockete.ui \
+ ./ui/preview.ui
 
 INCLUDEPATH = ./src $(LIBROCKET)/Include
 
