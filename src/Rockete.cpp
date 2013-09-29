@@ -1957,25 +1957,19 @@ void Rockete::updateTextureInfoFiles()
                     ".%s {\n"
                     "  width: %dpx;\n"
                     "  height: %dpx;\n"
-                    "  icon-decorator: image;\n"
-                    "  icon-decorator-id: %s;\n"
-                    "  icon-image: %s %dpx %dpx %dpx %dpx;\n"
-                    "}\n\n"
-                    ".%s-center {\n"
-                    "  width: %dpx;\n"
-                    "  height: %dpx;\n"
-                    "  icon-decorator: image;\n"
-                    "  icon-decorator-id: %s-center;\n"
-                    "  icon-image: %s %dpx %dpx %dpx %dpx;\n"
-                    "  icon-image-scaling: center;\n"
+                    "  icon1-decorator: image;\n"
+                    "  icon1-decorator-id: %s;\n"
+                    "  icon1-image: %s %dpx %dpx %dpx %dpx;\n"
+                    "  icon2-decorator: image;\n"
+                    "  icon2-decorator-id: %s-center;\n"
+                    "  icon2-image: %s %dpx %dpx %dpx %dpx;\n"
+                    "  icon2-image-scaling: center;\n"
                     "}\n\n"
                     , QFileInfo(texture).completeBaseName().toUtf8().constData()
                     , rc.width(), rc.height()
                     , QFileInfo(texture).completeBaseName().toUtf8().constData()
                     , tinfo.fileName().toUtf8().constData()
                     , rc.left(), rc.top(), rc.right(), rc.bottom()
-                    , QFileInfo(texture).completeBaseName().toUtf8().constData()
-                    , rc.width(), rc.height()
                     , QFileInfo(texture).completeBaseName().toUtf8().constData()
                     , tinfo.fileName().toUtf8().constData()
                     , rc.left(), rc.top(), rc.right(), rc.bottom()
