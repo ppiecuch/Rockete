@@ -22,6 +22,8 @@ class Rockete : public QMainWindow
 {
     Q_OBJECT
 
+    friend void logMessageOutput( QtMsgType type, const QMessageLogContext &context, const QString &amsg );
+
 public:
     Rockete(QWidget *parent = 0, Qt::WindowFlags flags = 0);
     ~Rockete();
@@ -104,7 +106,7 @@ protected:
 
 private:
     void newProject();
-    void openProject(const char *);
+    void openProject(const char *, bool = false);
     void saveProject(const char *);
     int openDocument(const char *);
     int openStyleSheet(const char *);
@@ -118,7 +120,9 @@ private:
     void addRulers();
     void updateCuttingTab(const QString &file, const QString &texture, int l, int b, int w, int h);
     void updateCuttingInfo(int lvalue, int tvalue, int rvalue, int bvalue);
-    void updateTextureInfoFiles();
+    bool updateTextureInfoFiles();  // true - file(s) has been created
+
+    void logHtmlMessage(QString aMsg);
 
     Ui::rocketeClass ui;
     RenderingView *renderingView;

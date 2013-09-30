@@ -81,21 +81,21 @@ void logMessageOutput( QtMsgType type, const QMessageLogContext &context, const 
         case QtDebugMsg:
                 fprintf( stderr, "%s Debug: %s \n", QTime::currentTime().toString().toLatin1().constData(), msg.toUtf8().constData() );
                 msg = "<font color=black><small>"+msg+"</small></font>";
-                mw->logMessage(msg);
+                mw->logHtmlMessage(msg);
                 break;
         case QtCriticalMsg:
                 fprintf( stderr, "%s Critical: %s \n", QTime::currentTime().toString().toLatin1().constData(), msg.toUtf8().constData() );
                 msg = "<font color=red><b>Critical: "+msg+"</></font>";
-                mw->logMessage(msg);
+                mw->logHtmlMessage(msg);
                 break;
         case QtWarningMsg:
                 fprintf( stderr, "%s Warning: %s \n", QTime::currentTime().toString().toLatin1().constData(), msg.toUtf8().constData() );
                 msg = "<font color=blue><small><b>Warning:</b> "+msg+"</small></font>";
-                mw->logMessage(msg);
+                mw->logHtmlMessage(msg);
                 break;
         case QtFatalMsg:
                 fprintf( stderr, "%s Fatal: %s \n", QTime::currentTime().toString().toLatin1().constData(), msg.toUtf8().constData() );
-                mw->logMessage("<big><b>Fatal: "+msg+"</b></big>");
+                mw->logHtmlMessage("<big><b>Fatal: "+msg+"</b></big>");
                 abort();
         }
 }
@@ -114,7 +114,7 @@ Rockete::Rockete(QWidget *parent, Qt::WindowFlags flags)
     if (!selectedTextureTmp.open())
         qDebug() << "Failed to save image in temporary file.";
 
-#ifdef Q_WS_MACX
+#ifdef Q_OS_MAC
     setAttribute(Qt::WA_MacSmallSize);
     ui.labelCuttingDim->setAttribute(Qt::WA_MacSmallSize);
     ui.labelCuttingDimLabel->setAttribute(Qt::WA_MacSmallSize);
@@ -1572,7 +1572,7 @@ void Rockete::newProject()
     ++untitled_counted;
 }
 
-void Rockete::openProject(const char *file_path)
+void Rockete::openProject(const char *file_path, bool restart)
 {
     QFileInfo file_info(file_path);
 
@@ -1609,7 +1609,10 @@ void Rockete::openProject(const char *file_path)
         populateTreeView("Snippets", ProjectManager::getInstance().getSnippetsFolderPath());
 
         if (!texturesAtlasInf.isEmpty())
-            updateTextureInfoFiles();
+            if(updateTextureInfoFiles() && !restart)
+                // reload project if files has been created
+                openProject(file_path, true);
+
 
         if (file_info.exists()) {
             Settings::setMostRecentFile(file_info.filePath());
@@ -1863,19 +1866,22 @@ format3:
     return "";
 }
 
-void Rockete::updateTextureInfoFiles()
+bool Rockete::updateTextureInfoFiles()
 {
+    bool ret_info = false;
     foreach(const QString &atlas_filename, texturesAtlasInf.keys()) {
 
         const QMap<QString, QRect> &atlas = texturesAtlasInf[atlas_filename];
         QFileInfo tinfo(atlas_filename);
 
         QString css_filename = tinfo.absolutePath()+QDir::separator()+QString(tinfo.completeBaseName()+".rcss"); // css info file
-        if (QFile::exists(css_filename))
+        if (QFile::exists(css_filename)) {
             if (tinfo.lastModified() < QFileInfo(css_filename).lastModified() ) {
                 qDebug() << "Skipping update of " << css_filename;
-                return;
+                continue;
             }
+        } else
+            ret_info = true; // file will be created - should be added to the project
         qDebug() << "Updating " << css_filename;
 
         FILE *css_file = fopen( css_filename.toUtf8().constData(), "w" );
@@ -1957,16 +1963,33 @@ void Rockete::updateTextureInfoFiles()
                     ".%s {\n"
                     "  width: %dpx;\n"
                     "  height: %dpx;\n"
+                    "  icon-decorator: image;\n"
+                    "  icon-decorator-id: %s;\n"
+                    "  icon-image: %s %dpx %dpx %dpx %dpx;\n"
+                    "}\n\n"
+                    ".%s-scaled {\n"
                     "  icon1-decorator: image;\n"
-                    "  icon1-decorator-id: %s;\n"
+                    "  icon1-decorator-id: %s-fit;\n"
                     "  icon1-image: %s %dpx %dpx %dpx %dpx;\n"
+                    "  icon1-image-scaling: fit;\n"
                     "  icon2-decorator: image;\n"
-                    "  icon2-decorator-id: %s-center;\n"
+                    "  icon2-decorator-id: %s-fill;\n"
                     "  icon2-image: %s %dpx %dpx %dpx %dpx;\n"
-                    "  icon2-image-scaling: center;\n"
+                    "  icon2-image-scaling: fill;\n"
+                    "  icon3-decorator: image;\n"
+                    "  icon3-decorator-id: %s-center;\n"
+                    "  icon3-image: %s %dpx %dpx %dpx %dpx;\n"
+                    "  icon3-image-scaling: center;\n"
                     "}\n\n"
                     , QFileInfo(texture).completeBaseName().toUtf8().constData()
                     , rc.width(), rc.height()
+                    , QFileInfo(texture).completeBaseName().toUtf8().constData()
+                    , tinfo.fileName().toUtf8().constData()
+                    , rc.left(), rc.top(), rc.right(), rc.bottom()
+                    , QFileInfo(texture).completeBaseName().toUtf8().constData()
+                    , QFileInfo(texture).completeBaseName().toUtf8().constData()
+                    , tinfo.fileName().toUtf8().constData()
+                    , rc.left(), rc.top(), rc.right(), rc.bottom()
                     , QFileInfo(texture).completeBaseName().toUtf8().constData()
                     , tinfo.fileName().toUtf8().constData()
                     , rc.left(), rc.top(), rc.right(), rc.bottom()
@@ -1978,6 +2001,7 @@ void Rockete::updateTextureInfoFiles()
             fclose(css_file);
         }
     }
+    return ret_info;
 }
 
 void Rockete::populateTreeView(const QString &top_item_name, const QString &directory_path)
@@ -2138,6 +2162,12 @@ void Rockete::splitterMovedChanges(int /* pos */, int /* index */)
 }
 
 void Rockete::logMessage(QString aMsg)
+{
+    // use small tag for all log messages - default text is too big.
+    logHtmlMessage("<small>"+aMsg+"</small>");
+}
+
+void Rockete::logHtmlMessage(QString aMsg)
 {
         if(ui.logWindow!=NULL && !aMsg.isEmpty())
                 ui.logWindow->append(aMsg);

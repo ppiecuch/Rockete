@@ -17,7 +17,7 @@
 
 // Public:
 
-RenderingView::RenderingView(QWidget *parent) : QGLWidget(parent), horzRuler(NULL), vertRuler(NULL)
+RenderingView::RenderingView(QWidget *parent) : QGLWidget(parent), vertRuler(NULL), horzRuler(NULL)
 {
     setMouseTracking(true);
     setAcceptDrops(true);

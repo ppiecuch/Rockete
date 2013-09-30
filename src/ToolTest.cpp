@@ -49,7 +49,7 @@ ToolTest::ToolTest()
     TestFrameInfo *e = &testFrames[0]; int c = 0, r = 1; while(e->image) {
         QImage result = QImage(e->image).scaled(128, 128).scaled(64, 64, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
         QToolButton *b = new QToolButton();
-        #ifdef Q_WS_MACX
+        #ifdef Q_OS_MAC
             b->setAttribute(Qt::WA_MacMiniSize);
         #endif
         // b->setFlat(true);

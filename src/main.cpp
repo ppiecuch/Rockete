@@ -5,7 +5,7 @@
 #include "RocketSystem.h"
 #include "ToolManager.h"
 #include "EditionHelper.h"
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 # include <CoreFoundation/CoreFoundation.h>
 #endif
 
@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
     QApplication a( argc, argv );
 
     qDebug() << "applicationDirPath: " << QCoreApplication::applicationDirPath();
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
     CFURLRef appUrlRef = CFBundleCopyBundleURL(CFBundleGetMainBundle());
     CFStringRef macPath = CFURLCopyFileSystemPath(appUrlRef, kCFURLPOSIXPathStyle);
     const char *bndlPathPtr = CFStringGetCStringPtr(macPath, kCFStringEncodingUTF8);

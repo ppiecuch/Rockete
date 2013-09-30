@@ -7,7 +7,7 @@
 #include <QMessageBox>
 #include "LocalizationManagerInterface.h"
 
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 # include <CoreFoundation/CoreFoundation.h>
 #endif
 
@@ -63,7 +63,7 @@ bool ProjectManager::Initialize(const QString &filename)
     projectName = file_info.baseName();
     projectFile = file_info.absoluteFilePath();
 
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
     CFURLRef appUrlRef = CFBundleCopyBundleURL(CFBundleGetMainBundle());
     CFStringRef macPath = CFURLCopyFileSystemPath(appUrlRef, kCFURLPOSIXPathStyle);
     const char *bndlPathPtr = CFStringGetCStringPtr(macPath, kCFStringEncodingUTF8)?:".";
@@ -94,7 +94,7 @@ bool ProjectManager::Initialize(const QString &filename)
             }
         }
     } else {
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
         fontPaths << (QString(bndlPathPtr) + "/fonts/");
 #endif
     }
@@ -121,7 +121,7 @@ bool ProjectManager::Initialize(const QString &filename)
             }
         }
     } else {
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
         texturePaths << (QString(bndlPathPtr) + "/textures/");
 #endif
     }
@@ -148,7 +148,7 @@ bool ProjectManager::Initialize(const QString &filename)
             }
         }
     } else {
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
         interfacePaths << (QString(bndlPathPtr) + "/interface/");
 #endif
     }
@@ -259,7 +259,7 @@ bool ProjectManager::Initialize(const QString &filename)
         }
     }
 
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
     CFRelease(appUrlRef);
     CFRelease(macPath);
 #endif
