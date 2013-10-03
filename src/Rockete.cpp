@@ -874,7 +874,7 @@ void Rockete::spinCuttingChanged(int /*value*/)
     QString inf = QString("%1;%2;%3;%4").arg(ui.spinCuttingLeftCap->value()).arg(ui.spinCuttingTopCap->value()).arg(ui.spinCuttingRightCap->value()).arg(ui.spinCuttingBottomCap->value());
     const QString key =  ui.labelCuttingDim->property("texture key").toString();
     ProjectManager::getInstance().setCuttingInfo(key, inf); // save cutting info for this texture
-    updateTextureInfoFiles(); // regenerate styles file with new info
+    updateTextureInfoFiles(file); // regenerate styles file with new info
 }
 
 void Rockete::updateCuttingInfo(int lvalue, int tvalue, int rvalue, int bvalue)
@@ -1868,7 +1868,14 @@ format3:
 
 bool Rockete::updateTextureInfoFiles()
 {
+    const QString dummy;
+    updateTextureInfoFiles(dummy);
+}
+
+bool Rockete::updateTextureInfoFiles(const QString &force)
+{
     bool ret_info = false;
+    QFileInfo finfo(force);
     foreach(const QString &atlas_filename, texturesAtlasInf.keys()) {
 
         const QMap<QString, QRect> &atlas = texturesAtlasInf[atlas_filename];
@@ -1876,9 +1883,11 @@ bool Rockete::updateTextureInfoFiles()
 
         QString css_filename = tinfo.absolutePath()+QDir::separator()+QString(tinfo.completeBaseName()+".rcss"); // css info file
         if (QFile::exists(css_filename)) {
-            if (tinfo.lastModified() < QFileInfo(css_filename).lastModified() ) {
-                qDebug() << "Skipping update of " << css_filename;
-                continue;
+            if (force.isEmpty() || tinfo.baseName() != finfo.baseName()) {
+                if (tinfo.lastModified() < QFileInfo(css_filename).lastModified() ) {
+                    qDebug() << "Skipping update of " << css_filename;
+                    continue;
+                }
             }
         } else
             ret_info = true; // file will be created - should be added to the project
@@ -1900,14 +1909,50 @@ bool Rockete::updateTextureInfoFiles()
                         fprintf(css_file,
                             "/* cutting: %d|%d|%d|%d */\n"
                             ".%s {\n"
-                            "  background-decorator: tiled-horizontal;\n"
-                            "  background-decorator-id: %s;\n"
-                            "  background-left-image: %s %dpx %dpx %dpx %dpx;\n"
-                            "  background-center-image: %s %dpx %dpx %dpx %dpx;\n"
-                            "  background-right-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background1-decorator: tiled-horizontal;\n"
+                            "  background1-decorator-id: %s;\n"
+                            "  background1-left-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background1-center-image: %s stretch %dpx %dpx %dpx %dpx;\n"
+                            "  background1-right-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background2-decorator: tiled-horizontal;\n"
+                            "  background2-decorator-id: %s-repeat-truncate;\n"
+                            "  background2-left-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background2-center-image: %s repeat-truncate %dpx %dpx %dpx %dpx;\n"
+                            "  background2-right-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background3-decorator: tiled-horizontal;\n"
+                            "  background3-decorator-id: %s-repeat-stretch;\n"
+                            "  background3-left-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background3-center-image: %s repeat-truncate %dpx %dpx %dpx %dpx;\n"
+                            "  background3-right-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background4-decorator: tiled-horizontal;\n"
+                            "  background4-decorator-id: %s-clamp-truncate;\n"
+                            "  background4-left-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background4-center-image: %s clamp-truncate %dpx %dpx %dpx %dpx;\n"
+                            "  background4-right-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background5-decorator: tiled-horizontal;\n"
+                            "  background5-decorator-id: %s-clamp-stretch;\n"
+                            "  background5-left-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background5-center-image: %s clamp-truncate %dpx %dpx %dpx %dpx;\n"
+                            "  background5-right-image: %s %dpx %dpx %dpx %dpx;\n"
                             "}\n\n"
                             , lvalue, rvalue, bvalue, tvalue
                             , QFileInfo(texture).completeBaseName().toUtf8().constData()
+                            , QFileInfo(texture).completeBaseName().toUtf8().constData()
+                            , tinfo.fileName().toUtf8().constData(), l, b, l+lvalue, b+h
+                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b, l+w-rvalue, b+h
+                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b, l+w, b+h
+                            , QFileInfo(texture).completeBaseName().toUtf8().constData()
+                            , tinfo.fileName().toUtf8().constData(), l, b, l+lvalue, b+h
+                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b, l+w-rvalue, b+h
+                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b, l+w, b+h
+                            , QFileInfo(texture).completeBaseName().toUtf8().constData()
+                            , tinfo.fileName().toUtf8().constData(), l, b, l+lvalue, b+h
+                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b, l+w-rvalue, b+h
+                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b, l+w, b+h
+                            , QFileInfo(texture).completeBaseName().toUtf8().constData()
+                            , tinfo.fileName().toUtf8().constData(), l, b, l+lvalue, b+h
+                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b, l+w-rvalue, b+h
+                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b, l+w, b+h
                             , QFileInfo(texture).completeBaseName().toUtf8().constData()
                             , tinfo.fileName().toUtf8().constData(), l, b, l+lvalue, b+h
                             , tinfo.fileName().toUtf8().constData(), l+lvalue, b, l+w-rvalue, b+h
@@ -1917,14 +1962,50 @@ bool Rockete::updateTextureInfoFiles()
                         fprintf(css_file,
                             "/* cutting: %d|%d|%d|%d */\n"
                             ".%s {\n"
-                            "  background-decorator: tiled-vertical;\n"
-                            "  background-decorator-id: %s;\n"
-                            "  background-bottom-image: %s %dpx %dpx %dpx %dpx;\n"
-                            "  background-bottom-image: %s %dpx %dpx %dpx %dpx;\n"
-                            "  background-bottom-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background1-decorator: tiled-vertical;\n"
+                            "  background1-decorator-id: %s;\n"
+                            "  background1-bottom-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background1-center-image: %s stretch %dpx %dpx %dpx %dpx;\n"
+                            "  background1-top-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background2-decorator: tiled-vertical;\n"
+                            "  background2-decorator-id: %s-repeat-truncate;\n"
+                            "  background2-left-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background2-center-image: %s repeat-truncate %dpx %dpx %dpx %dpx;\n"
+                            "  background2-right-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background3-decorator: tiled-vertical;\n"
+                            "  background3-decorator-id: %s-repeat-stretch;\n"
+                            "  background3-left-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background3-center-image: %s repeat-truncate %dpx %dpx %dpx %dpx;\n"
+                            "  background3-right-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background4-decorator: tiled-vertical;\n"
+                            "  background4-decorator-id: %s-clamp-truncate;\n"
+                            "  background4-left-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background4-center-image: %s clamp-truncate %dpx %dpx %dpx %dpx;\n"
+                            "  background4-right-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background5-decorator: tiled-vertical;\n"
+                            "  background5-decorator-id: %s-clamp-stretch;\n"
+                            "  background5-left-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background5-center-image: %s clamp-truncate %dpx %dpx %dpx %dpx;\n"
+                            "  background5-right-image: %s %dpx %dpx %dpx %dpx;\n"
                             "}\n\n"
                             , lvalue, rvalue, bvalue, tvalue
                             , QFileInfo(texture).completeBaseName().toUtf8().constData()
+                            , QFileInfo(texture).completeBaseName().toUtf8().constData()
+                            , tinfo.fileName().toUtf8().constData(), l, b+h-tvalue, l+w, b+h
+                            , tinfo.fileName().toUtf8().constData(), l, b+bvalue, l+w, b+h-tvalue
+                            , tinfo.fileName().toUtf8().constData(), l, b, l+w, b+bvalue
+                            , QFileInfo(texture).completeBaseName().toUtf8().constData()
+                            , tinfo.fileName().toUtf8().constData(), l, b+h-tvalue, l+w, b+h
+                            , tinfo.fileName().toUtf8().constData(), l, b+bvalue, l+w, b+h-tvalue
+                            , tinfo.fileName().toUtf8().constData(), l, b, l+w, b+bvalue
+                            , QFileInfo(texture).completeBaseName().toUtf8().constData()
+                            , tinfo.fileName().toUtf8().constData(), l, b+h-tvalue, l+w, b+h
+                            , tinfo.fileName().toUtf8().constData(), l, b+bvalue, l+w, b+h-tvalue
+                            , tinfo.fileName().toUtf8().constData(), l, b, l+w, b+bvalue
+                            , QFileInfo(texture).completeBaseName().toUtf8().constData()
+                            , tinfo.fileName().toUtf8().constData(), l, b+h-tvalue, l+w, b+h
+                            , tinfo.fileName().toUtf8().constData(), l, b+bvalue, l+w, b+h-tvalue
+                            , tinfo.fileName().toUtf8().constData(), l, b, l+w, b+bvalue
                             , QFileInfo(texture).completeBaseName().toUtf8().constData()
                             , tinfo.fileName().toUtf8().constData(), l, b+h-tvalue, l+w, b+h
                             , tinfo.fileName().toUtf8().constData(), l, b+bvalue, l+w, b+h-tvalue
@@ -1934,20 +2015,104 @@ bool Rockete::updateTextureInfoFiles()
                         fprintf(css_file,
                             "/* cutting: %d|%d|%d|%d */\n"
                             ".%s {\n"
-                            "  background-decorator: tiled-box;\n"
-                            "  background-decorator-id: %s;\n"
-                            "  background-bottom-left-image: %s %dpx %dpx %dpx %dpx;\n"
-                            "  background-bottom-image: %s %dpx %dpx %dpx %dpx;\n"
-                            "  background-bottom-right-image: %s %dpx %dpx %dpx %dpx;\n"
-                            "  background-left-image: %s %dpx %dpx %dpx %dpx;\n"
-                            "  background-center-image: %s %dpx %dpx %dpx %dpx;\n"
-                            "  background-right-image: %s %dpx %dpx %dpx %dpx;\n"
-                            "  background-top-left-image: %s %dpx %dpx %dpx %dpx;\n"
-                            "  background-top-image: %s %dpx %dpx %dpx %dpx;\n"
-                            "  background-top-right-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background1-decorator: tiled-box;\n"
+                            "  background1-decorator-id: %s;\n"
+                            "  background1-bottom-left-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background1-bottom-image: %s stretch %dpx %dpx %dpx %dpx;\n"
+                            "  background1-bottom-right-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background1-left-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background1-center-image: %s stretch %dpx %dpx %dpx %dpx;\n"
+                            "  background1-right-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background1-top-left-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background1-top-image: %s stretch %dpx %dpx %dpx %dpx;\n"
+                            "  background1-top-right-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background2-decorator: tiled-box;\n"
+                            "  background2-decorator-id: %s-repeat-truncate;\n"
+                            "  background2-bottom-left-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background2-bottom-image: %s repeat-truncate %dpx %dpx %dpx %dpx;\n"
+                            "  background2-bottom-right-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background2-left-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background2-center-image: %s repeat-truncate %dpx %dpx %dpx %dpx;\n"
+                            "  background2-right-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background2-top-left-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background2-top-image: %s repeat-truncate %dpx %dpx %dpx %dpx;\n"
+                            "  background2-top-right-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background3-decorator: tiled-box;\n"
+                            "  background3-decorator-id: %s-repeat-stretch;\n"
+                            "  background3-bottom-left-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background3-bottom-image: %s repeat-stretch %dpx %dpx %dpx %dpx;\n"
+                            "  background3-bottom-right-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background3-left-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background3-center-image: %s repeat-stretch %dpx %dpx %dpx %dpx;\n"
+                            "  background3-right-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background3-top-left-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background3-top-image: %s repeat-stretch %dpx %dpx %dpx %dpx;\n"
+                            "  background3-top-right-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background4-decorator: tiled-box;\n"
+                            "  background4-decorator-id: %s-clamp-truncate;\n"
+                            "  background4-bottom-left-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background4-bottom-image: %s clamp-truncate %dpx %dpx %dpx %dpx;\n"
+                            "  background4-bottom-right-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background4-left-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background4-center-image: %s clamp-truncate %dpx %dpx %dpx %dpx;\n"
+                            "  background4-right-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background4-top-left-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background4-top-image: %s clamp-truncate %dpx %dpx %dpx %dpx;\n"
+                            "  background4-top-right-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background5-decorator: tiled-box;\n"
+                            "  background5-decorator-id: %s-clamp-stretch;\n"
+                            "  background5-bottom-left-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background5-bottom-image: %s clamp-stretch %dpx %dpx %dpx %dpx;\n"
+                            "  background5-bottom-right-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background5-left-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background5-center-image: %s clamp-stretch %dpx %dpx %dpx %dpx;\n"
+                            "  background5-right-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background5-top-left-image: %s %dpx %dpx %dpx %dpx;\n"
+                            "  background5-top-image: %s clamp-stretch %dpx %dpx %dpx %dpx;\n"
+                            "  background5-top-right-image: %s %dpx %dpx %dpx %dpx;\n"
                             "}\n\n"
                             , lvalue, rvalue, bvalue, tvalue
                             , QFileInfo(texture).completeBaseName().toUtf8().constData()
+                            , QFileInfo(texture).completeBaseName().toUtf8().constData()
+                            , tinfo.fileName().toUtf8().constData(), l, b+h-tvalue, l+lvalue, b+h
+                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b+h-tvalue, l+w-rvalue, b+h
+                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b+h-tvalue, l+w, b+h
+                            , tinfo.fileName().toUtf8().constData(), l, b+bvalue, l+lvalue, b+h-tvalue
+                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b+bvalue, l+w-rvalue, b+h-tvalue
+                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b+bvalue, l+w, b+h-tvalue
+                            , tinfo.fileName().toUtf8().constData(), l, b, l+lvalue, b+bvalue
+                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b, l+w-rvalue, b+bvalue
+                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b, l+w, b+bvalue
+                            , QFileInfo(texture).completeBaseName().toUtf8().constData()
+                            , tinfo.fileName().toUtf8().constData(), l, b+h-tvalue, l+lvalue, b+h
+                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b+h-tvalue, l+w-rvalue, b+h
+                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b+h-tvalue, l+w, b+h
+                            , tinfo.fileName().toUtf8().constData(), l, b+bvalue, l+lvalue, b+h-tvalue
+                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b+bvalue, l+w-rvalue, b+h-tvalue
+                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b+bvalue, l+w, b+h-tvalue
+                            , tinfo.fileName().toUtf8().constData(), l, b, l+lvalue, b+bvalue
+                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b, l+w-rvalue, b+bvalue
+                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b, l+w, b+bvalue
+                            , QFileInfo(texture).completeBaseName().toUtf8().constData()
+                            , tinfo.fileName().toUtf8().constData(), l, b+h-tvalue, l+lvalue, b+h
+                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b+h-tvalue, l+w-rvalue, b+h
+                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b+h-tvalue, l+w, b+h
+                            , tinfo.fileName().toUtf8().constData(), l, b+bvalue, l+lvalue, b+h-tvalue
+                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b+bvalue, l+w-rvalue, b+h-tvalue
+                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b+bvalue, l+w, b+h-tvalue
+                            , tinfo.fileName().toUtf8().constData(), l, b, l+lvalue, b+bvalue
+                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b, l+w-rvalue, b+bvalue
+                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b, l+w, b+bvalue
+                            , QFileInfo(texture).completeBaseName().toUtf8().constData()
+                            , tinfo.fileName().toUtf8().constData(), l, b+h-tvalue, l+lvalue, b+h
+                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b+h-tvalue, l+w-rvalue, b+h
+                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b+h-tvalue, l+w, b+h
+                            , tinfo.fileName().toUtf8().constData(), l, b+bvalue, l+lvalue, b+h-tvalue
+                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b+bvalue, l+w-rvalue, b+h-tvalue
+                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b+bvalue, l+w, b+h-tvalue
+                            , tinfo.fileName().toUtf8().constData(), l, b, l+lvalue, b+bvalue
+                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b, l+w-rvalue, b+bvalue
+                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b, l+w, b+bvalue
                             , QFileInfo(texture).completeBaseName().toUtf8().constData()
                             , tinfo.fileName().toUtf8().constData(), l, b+h-tvalue, l+lvalue, b+h
                             , tinfo.fileName().toUtf8().constData(), l+lvalue, b+h-tvalue, l+w-rvalue, b+h
@@ -2121,7 +2286,7 @@ void Rockete::closeTab(int index, bool must_save)
 
     if(doc)
     {
-        if(getCurrentDocument()->rocketDocument == doc->rocketDocument)
+        if(getCurrentDocument() && getCurrentDocument()->rocketDocument == doc->rocketDocument)
         {
             ui.documentHierarchyTreeWidget->clear();
             renderingView->changeCurrentDocument(NULL);

@@ -120,7 +120,8 @@ private:
     void addRulers();
     void updateCuttingTab(const QString &file, const QString &texture, int l, int b, int w, int h);
     void updateCuttingInfo(int lvalue, int tvalue, int rvalue, int bvalue);
-    bool updateTextureInfoFiles();  // true - file(s) has been created
+    bool updateTextureInfoFiles();  // true - new file(s) has been created
+    bool updateTextureInfoFiles(const QString &force);
 
     void logHtmlMessage(QString aMsg);
 
