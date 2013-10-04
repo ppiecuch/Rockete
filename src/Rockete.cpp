@@ -553,7 +553,7 @@ void Rockete::codeTabRequestClose(int index)
 
     if(ui.codeTabWidget->tabText(index).contains("*") || !changed_outside.isEmpty()) // if changed in the app or outside
     {
-        OpenedFile *file = qobject_cast<OpenedFile *>(ui.codeTabWidget->widget(0));
+        OpenedFile *file = qobject_cast<OpenedFile *>(ui.codeTabWidget->widget(index));
         QString question;
         question = "Save ";
         question += file->fileInfo.fileName();
@@ -1366,14 +1366,23 @@ void Rockete::changeEvent(QEvent *event)
         {
             i.next();
             fileChangedOutsideArray.remove(i.key());
-            if( QMessageBox::question(this, "Rockete: file change detected", QFileInfo(i.value()).fileName() + " has been modified,\ndo you want to reload it?", QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
+
+            QFileInfo file_info = i.value();
+            new_tab_index = getTabIndexFromFileName(file_info.fileName().toUtf8().data());
+
+            bool reload = false;
+
+            if(ui.codeTabWidget->tabText(new_tab_index).contains("*"))
+                if( QMessageBox::question(this, "Rockete: file change detected", QFileInfo(i.value()).fileName() + " has been modified,\ndo you want to reload it?", QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
+                    reload = true; // reload silently if no change has been made to the file
+
+            if (reload)
             {
-                QFileInfo file_info = i.value();
                 QWidget *widget;
                 isReloadingFile = true;
+
                 closeTab(i.key(), false);
                 openFile(i.value());
-                new_tab_index = getTabIndexFromFileName(file_info.fileName().toUtf8().data());
 
                 widget = ui.codeTabWidget->widget(new_tab_index);
                 ui.codeTabWidget->removeTab(new_tab_index);
@@ -1387,9 +1396,9 @@ void Rockete::changeEvent(QEvent *event)
 
 void Rockete::closeEvent(QCloseEvent *event)
 {
-    int
-        response;
+    int response;
     
+    // close all tabs:
     while(ui.codeTabWidget->count()>0)
     {
         if(ui.codeTabWidget->tabText(0).contains("*"))
@@ -1408,9 +1417,9 @@ void Rockete::closeEvent(QCloseEvent *event)
         }
 
         if(response==QMessageBox::Yes)
-            closeTab(0,true);
+            closeTab(0, true);
         else if(response==QMessageBox::No)
-            closeTab(0,false);
+            closeTab(0, false);
         else
         {
             event->ignore();
