@@ -46,10 +46,12 @@ ToolTest::ToolTest()
     glayout->setMargin(2);
     glayout->setSpacing(2);
     glayout->addWidget(new QLabel("<table align=center<tr><td><img src=':/images/tool_test.png'></td><td valign=middle>Tool: <b>Test device resolutions</b></td></tr></table>"), 0, 0, 1, kGridSize, Qt::AlignCenter);
-    TestFrameInfo *e = &testFrames[0]; int c = 0, r = 1; while(e->image) {
+    TestFrameInfo *e = &testFrames[0]; int c = 0, r = 1, x = 0; while(e->image) {
         QImage result = QImage(e->image).scaled(128, 128).scaled(64, 64, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
         QToolButton *b = new QToolButton();
-        #ifdef Q_OS_MAC
+        b->setProperty("index", x);
+        connect(b, SIGNAL(clicked()), Rockete::instance, SLOT(openPreviewEvent()));
+        #if defined Q_OS_MAC || defined Q_WS_MAC
             b->setAttribute(Qt::WA_MacMiniSize);
         #endif
         // b->setFlat(true);
@@ -62,7 +64,7 @@ ToolTest::ToolTest()
         b->setToolTip(QString("%1 %2x%3").arg(e->label).arg(e->w).arg(e->h));
         b->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         glayout->addWidget(b,r,c); ++c; if (c == kGridSize) { c = 0; ++r; }
-        ++e;
+        ++e; ++x;
     }
     layout = glayout;
     widget = new QWidget();

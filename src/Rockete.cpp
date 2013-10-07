@@ -26,6 +26,7 @@
 #include "Settings.h"
 #include <QDirIterator>
 #include <QShortcut>
+#include "DocumentPreview.h"
 #include "ProjectManager.h"
 #include <QPluginLoader>
 #include "QDRuler.h"
@@ -114,7 +115,7 @@ Rockete::Rockete(QWidget *parent, Qt::WindowFlags flags)
     if (!selectedTextureTmp.open())
         qDebug() << "Failed to save image in temporary file.";
 
-#ifdef Q_OS_MAC
+#if defined Q_OS_MAC || defined Q_WS_MAC
     setAttribute(Qt::WA_MacSmallSize);
     ui.labelCuttingDim->setAttribute(Qt::WA_MacSmallSize);
     ui.labelCuttingDimLabel->setAttribute(Qt::WA_MacSmallSize);
@@ -2244,13 +2245,27 @@ void Rockete::populateTreeView(const QString &top_item_name, const QString &dire
     item->sortChildren(1,Qt::AscendingOrder);
 }
 
+void Rockete::openPreviewEvent()
+{
+    // get preview index and open correct window
+    const QObject *source = QObject::sender();
+    const int index = source->property("index").toInt();
+}
+
+// open preview window with size w x h
+void Rockete::openPreviewWindow(int w, int h)
+{
+    DocumentPreview *preview = new DocumentPreview();
+    preview->show();
+}
+
 void Rockete::loadPlugins()
 {
     QDir pluginsDir = QDir(qApp->applicationDirPath());
     #if defined(Q_OS_WIN)
         if (pluginsDir.dirName().toLower() == "debug" || pluginsDir.dirName().toLower() == "release")
             pluginsDir.cdUp();
-    #elif defined(Q_OS_MAC)
+    #elif defined(Q_OS_MAC) || defined(Q_WS_MAC)
         if (pluginsDir.dirName() == "MacOS") {
             pluginsDir.cdUp();
             pluginsDir.cdUp();

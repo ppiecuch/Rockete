@@ -98,6 +98,7 @@ public slots:
     void cuttingMaskToggle(bool value);
     void cuttingPreviewTabChange(int tab);
     void splitterMovedChanges(int pos, int index);
+    void openPreviewEvent();
 
 protected:
     virtual void keyPressEvent(QKeyEvent *event);
@@ -122,6 +123,8 @@ private:
     void updateCuttingInfo(int lvalue, int tvalue, int rvalue, int bvalue);
     bool updateTextureInfoFiles();  // true - new file(s) has been created
     bool updateTextureInfoFiles(const QString &force);
+    // open preview window with size w x h
+    void openPreviewWindow(int w, int h);
 
     void logHtmlMessage(QString aMsg);
 

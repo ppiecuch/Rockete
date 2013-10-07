@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Rockete - libRocket files editor
 
 ## New changelog and development progress
@@ -45,6 +46,36 @@ It is pronunced like "Machete" ;)
 ## License (MIT)
  
  Copyright (c) 2011-2012 Fishing Cactus SA
+=======
+# libRocket - The HTML/CSS User Interface Library
+
+http://librocket.com
+
+libRocket is the C++ user interface package based on the HTML and CSS standards. It is 
+designed as a complete solution for any project's interface needs.
+
+libRocket uses the time-tested open standards XHTML1.0 and CSS2.0 (while borrowing features from 
+HTML5 and CSS3), and extends them with features suited towards real-time applications. Because of 
+this, you don't have to learn a whole new proprietary technology like other libraries in this space.
+
+## Features
+
+- Cross platform architecture: Windows, Mac, Linux, iPhone, etc.
+- Dynamic layout system.
+- Efficient application-wide styling, with a custom-built templating engine.
+- Fully featured control set: buttons, sliders, drop-downs, etc.
+- Runtime visual debugging suite.
+- Easily integrated and extensible with Python scripting.
+
+## Extensible
+- Abstracted interfaces for plugging in to any game engine.
+- Decorator engine allowing custom application-specific effects that can be applied to any element.
+- Generic event system that binds seamlessly into existing projects.
+
+## License (MIT)
+ 
+ Copyright (c) 2008-2010 CodePoint Ltd, Shift Technology Ltd
+>>>>>>> 4d553b6bb519c7f5e4f4496de71ad7430ea7269b
  
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
