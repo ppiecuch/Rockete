@@ -18,6 +18,45 @@
 class QDRuler;
 class QDLabel;
 
+struct LocalScreenSizeItem
+{
+    LocalScreenSizeItem() : width(0), height(0)
+    {
+    }
+
+    LocalScreenSizeItem(const int _width, const int _height, const char *text=NULL)
+    {
+        width = _width;
+        height = _height;
+        displayedString = QString::number(width) + "x" + QString::number(height);
+        displayedTwoString = displayedString;
+
+        if (text)
+        {
+            labelString = text;
+            displayedString += " (";
+            displayedString += text;
+            displayedString += ")";
+            displayedTwoString += "\n(";
+            displayedTwoString += text;
+            displayedTwoString += ")";
+        }
+    }
+
+    QString labelString;
+    QString displayedString;
+    QString displayedTwoString; // two line label
+    int width;
+    int height;
+};
+
+// available frames:
+extern struct TestFrameInfo {
+    const char *image;
+    bool tool, toolbar;
+    LocalScreenSizeItem size;
+} testFrames[];
+
 class Rockete : public QMainWindow
 {
     Q_OBJECT
@@ -98,7 +137,8 @@ public slots:
     void cuttingMaskToggle(bool value);
     void cuttingPreviewTabChange(int tab);
     void splitterMovedChanges(int pos, int index);
-    void openPreviewEvent();
+    void newScreenSizeAction();
+    void orientationChange(QAction *action);
 
 protected:
     virtual void keyPressEvent(QKeyEvent *event);
@@ -123,7 +163,8 @@ private:
     void updateCuttingInfo(int lvalue, int tvalue, int rvalue, int bvalue);
     bool updateTextureInfoFiles();  // true - new file(s) has been created
     bool updateTextureInfoFiles(const QString &force);
-    // open preview window with size w x h
+    void setScreenSize(int width, int height);
+    // open preview window with document size w x h
     void openPreviewWindow(int w, int h);
 
     void logHtmlMessage(QString aMsg);

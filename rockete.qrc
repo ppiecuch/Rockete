@@ -37,5 +37,11 @@
         <file>images/frame-iphone5.png</file>
         <file>images/frame-playbook.png</file>
         <file>images/frame-z10.png</file>
+        <file>images/orientation-landscapeleft.png</file>
+        <file>images/orientation-landscaperight.png</file>
+        <file>images/orientation-portrait.png</file>
+        <file>images/orientation-upsidedown.png</file>
+        <file>images/frame-monitor.png</file>
+        <file>images/dimensions.png</file>
     </qresource>
 </RCC>

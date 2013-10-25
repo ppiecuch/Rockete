@@ -22,6 +22,10 @@ public:
     {
         return context;
     }
+
+    int context_width() { return context_w; }
+    int context_height() { return context_h; }
+
     static RocketSystem & getInstance()
     {
         if( !instance )
@@ -55,6 +59,7 @@ private:
 
     RocketRenderInterface renderInterface;
     Context *context;
+    int context_w, context_h;
     EventListener *eventListener;
     QTime t;
     static RocketSystem * instance;

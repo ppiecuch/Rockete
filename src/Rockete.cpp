@@ -40,25 +40,24 @@ const int kCuttingImagePreviewTabIndex = 1;
 
 void logMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &amsg );
 
-struct LocalScreenSizeItem
-{
-    LocalScreenSizeItem(const int _width, const int _height, const char *text=NULL)
-    {
-        width = _width;
-        height = _height;
-        displayedString = QString::number(width) + "x" + QString::number(height);
-
-        if (text)
-        {
-            displayedString += " (";
-            displayedString += text;
-            displayedString += ")";
-        }
-    }
-
-    QString displayedString;
-    int width;
-    int height;
+TestFrameInfo testFrames[] = {
+    { ":/images/frame-android-xsmall.png", true, false, LocalScreenSizeItem(320, 480, "Android") },
+    { ":/images/frame-android-small.png", true, false, LocalScreenSizeItem(480, 640, "Android VGA") },
+    { ":/images/frame-android-medium.png", true, false, LocalScreenSizeItem(480, 854, "Android FWVGA") },
+    { ":/images/frame-iphone.png", true, false, LocalScreenSizeItem(320, 480, "iPhone3") },
+    { ":/images/frame-monitor.png", false, true, LocalScreenSizeItem(800, 480, "WVGA ") },
+    { ":/images/frame-monitor.png", true, false, LocalScreenSizeItem(800, 600) },
+    { ":/images/frame-iphone.png", true, true, LocalScreenSizeItem(640, 960, "iPhone4") },
+    { ":/images/frame-iphone5.png", true, true, LocalScreenSizeItem(1136, 640, "iPhone5") },
+    { ":/images/frame-ipad.png", true, true, LocalScreenSizeItem(768, 1024, "iPad") },
+    { ":/images/frame-monitor.png", false, false, LocalScreenSizeItem(1024, 768) },
+    { ":/images/frame-playbook.png", true, true, LocalScreenSizeItem(1024, 600, "Playbook") },
+    { ":/images/frame-z10.png", true, true, LocalScreenSizeItem(768, 1280, "BB Z10") },
+    { ":/images/frame-monitor.png", false, false, LocalScreenSizeItem(1280, 720) },
+    { ":/images/frame-monitor.png", false, false, LocalScreenSizeItem(1600, 1024) },
+    { ":/images/frame-monitor.png", true, false, LocalScreenSizeItem(1920, 1080, "HD") },
+    { ":/images/frame-ipad.png", true, false, LocalScreenSizeItem(1536, 2048, "iPad3") },
+    { NULL }
 };
 
 // new global log/message handler:
@@ -76,27 +75,28 @@ void logMessageOutput( QtMsgType type, const QMessageLogContext &context, const 
         OutputDebugString( (msg + "\n").unicode() );
 #endif
 
-        QTextDocument text; text.setPlainText(msg); msg = text.toHtml(); // make special chars printable in html
+        msg = msg.toHtmlEscaped(); // make special chars printable in html
         switch ( type )
         {
         case QtDebugMsg:
-                fprintf( stderr, "%s Debug: %s \n", QTime::currentTime().toString().toLatin1().constData(), msg.toUtf8().constData() );
+                fprintf( stderr, "%s Debug: %s \n", QTime::currentTime().toString().toLatin1().constData(), amsg.toUtf8().constData() );
                 msg = "<font color=black><small>"+msg+"</small></font>";
                 mw->logHtmlMessage(msg);
                 break;
         case QtCriticalMsg:
-                fprintf( stderr, "%s Critical: %s \n", QTime::currentTime().toString().toLatin1().constData(), msg.toUtf8().constData() );
+                fprintf( stderr, "%s Critical: %s \n", QTime::currentTime().toString().toLatin1().constData(), amsg.toUtf8().constData() );
                 msg = "<font color=red><b>Critical: "+msg+"</></font>";
                 mw->logHtmlMessage(msg);
                 break;
         case QtWarningMsg:
-                fprintf( stderr, "%s Warning: %s \n", QTime::currentTime().toString().toLatin1().constData(), msg.toUtf8().constData() );
+                fprintf( stderr, "%s Warning: %s \n", QTime::currentTime().toString().toLatin1().constData(), amsg.toUtf8().constData() );
                 msg = "<font color=blue><small><b>Warning:</b> "+msg+"</small></font>";
                 mw->logHtmlMessage(msg);
                 break;
         case QtFatalMsg:
-                fprintf( stderr, "%s Fatal: %s \n", QTime::currentTime().toString().toLatin1().constData(), msg.toUtf8().constData() );
-                mw->logHtmlMessage("<big><b>Fatal: "+msg+"</b></big>");
+                fprintf( stderr, "%s Fatal: %s \n", QTime::currentTime().toString().toLatin1().constData(), amsg.toUtf8().constData() );
+                msg = "<big><b>Fatal: "+msg+"</b></big>";
+                mw->logHtmlMessage(msg);
                 abort();
         }
 }
@@ -188,29 +188,64 @@ Rockete::Rockete(QWidget *parent, Qt::WindowFlags flags)
     attributeTreeModel = new AttributeTreeModel();
     propertyTreeModel = new PropertyTreeModel();
 
-    languageBox = new QComboBox(this);
-    languageBox->setEditable(false);
-    languageBox->setInsertPolicy( QComboBox::InsertAlphabetically );
-
     if(LocalizationManagerInterface::hasInstance())
     {
-        foreach(LocalizationManagerInterface::LocalizationLanguage language, LocalizationManagerInterface::getInstance().getSupportedLanguages())
+        int langs = 0; foreach(LocalizationManagerInterface::LocalizationLanguage language, LocalizationManagerInterface::getInstance().getSupportedLanguages())
         {
-            languageBox->addItem(LocalizationManagerInterface::getInstance().getLanguageNameForLanguage(language), (int)language);
+            languageBox->addItem(LocalizationManagerInterface::getInstance().getLanguageNameForLanguage(language), (int)language); ++langs;
         }
 
-        ui.statusBar->showMessage( "Localization Activated", 10000 );
+        if (langs) {
+            languageBox = new QComboBox(this);
+            languageBox->setEditable(false);
+            languageBox->setInsertPolicy( QComboBox::InsertAlphabetically );
+
+            connect(languageBox, SIGNAL(activated(const QString&)), (QObject*)this, SLOT(languageBoxActivated()));
+            ui.mainToolBar->addSeparator();
+            ui.mainToolBar->addWidget(languageBox);
+
+            ui.statusBar->showMessage( "Localization Activated", 10000 );
+        }
     }
-
-    connect(languageBox, SIGNAL(activated(const QString&)), (QObject*)this, SLOT(languageBoxActivated()));
-    ui.mainToolBar->addSeparator();
-    ui.mainToolBar->addWidget(languageBox);
-
 
     QAction *new_action = new QAction(QIcon(":/images/new_button.png"), "create button", this);
     connect(new_action, SIGNAL(triggered()), (QObject*)this, SLOT(newButtonWizardActivated()));
     ui.mainToolBar->addAction(new_action);
     
+    ui.mainToolBar->addSeparator();
+
+    int orient = Settings::getInt("ScreenSizeOrient", 0);
+
+    QAction *portrait_action = new QAction(QIcon(":/images/orientation-portrait.png"), "Portrait", this);
+    portrait_action->setProperty("orientation", 0);
+    portrait_action->setCheckable(true);
+    if (orient == 0) portrait_action->setChecked( true );
+    QAction *landscape_action = new QAction(QIcon(":/images/orientation-landscapeleft.png"), "Landscape", this);
+    landscape_action->setProperty("orientation", 1);
+    landscape_action->setCheckable(true);
+    if (orient == 1) landscape_action->setChecked( true );
+    QActionGroup * group = new QActionGroup( this );
+    group->addAction(portrait_action);
+    group->addAction(landscape_action);
+    ui.mainToolBar->addActions(group->actions());
+
+    QObject::connect(group, SIGNAL(triggered(QAction*)),
+            this, SLOT(orientationChange(QAction*)));
+
+    // quick resolution change:
+    QMenu *dim = new QMenu(tr("Dimension"));
+    dim->menuAction()->setIcon(QIcon(":/images/dimensions.png"));
+    ui.mainToolBar->addAction(dim->menuAction());
+
+    TestFrameInfo *e = &testFrames[0]; int x = 0; while(e->image) {
+        if (e->toolbar) {
+            QAction *res_action = new QAction(QIcon(e->image), e->size.displayedString, this);
+            res_action->setProperty("index", x);
+            connect(res_action, SIGNAL(triggered()), (QObject*)this, SLOT(newScreenSizeAction()));
+            dim->addAction(res_action);
+        }
+        ++e; ++x;
+    }
 
     labelZoom = new QLabel(parent);
     labelZoom->setFrameStyle(QFrame::Panel | QFrame::Sunken);
@@ -591,22 +626,41 @@ void Rockete::menuReloadClicked()
     reloadCurrentDocument();
 }
 
+void Rockete::newScreenSizeAction()
+{
+    // get preview index and resize view:
+    const QObject *source = QObject::sender();
+    const int index = source->property("index").toInt();
+    setScreenSize(testFrames[index].size.width, testFrames[index].size.height);
+}
+
+// open preview window with size w x h
+void Rockete::openPreviewWindow(int w, int h)
+{
+    DocumentPreview *preview = new DocumentPreview();
+    preview->show();
+}
+
+void Rockete::orientationChange(QAction *action)
+{
+    const int index = action->property("orientation").toInt();
+    switch(index) {
+        /* portrait */ case 0: setScreenSize(RocketSystem::getInstance().context_height(), RocketSystem::getInstance().context_widtht()); break;
+        /* lasndsca */ case 1: setScreenSize(RocketSystem::getInstance().context_height(), RocketSystem::getInstance().context_widtht()); break;
+    }
+    // reload document with new orientation
+    Settings::setValue("ScreenSizeOrient", index);
+}
+
 void Rockete::menuSetScreenSizeClicked()
 {
     QList<LocalScreenSizeItem*> item_list;
     QStringList item_string_list;
     int index_to_select = 0;
 
-    item_list.push_back(new LocalScreenSizeItem(480, 320, "iPhone3"));
-    item_list.push_back(new LocalScreenSizeItem(960, 640, "iPhone4"));
-    item_list.push_back(new LocalScreenSizeItem(800, 480, "WVGA "));
-    item_list.push_back(new LocalScreenSizeItem(800, 600));
-    item_list.push_back(new LocalScreenSizeItem(1024, 768));
-    item_list.push_back(new LocalScreenSizeItem(1136, 640, "iPhone5"));
-    item_list.push_back(new LocalScreenSizeItem(1280, 720));
-    item_list.push_back(new LocalScreenSizeItem(1600, 1024));
-    item_list.push_back(new LocalScreenSizeItem(1920, 1080, "HD"));
-    item_list.push_back(new LocalScreenSizeItem(2048, 1536, "iPad3"));
+    TestFrameInfo *e = &testFrames[0]; while(e->image) {
+        item_list.push_back(&e->size); ++e;
+    }
 
     for (int i=0; i<item_list.size(); ++i)
     {
@@ -626,21 +680,24 @@ void Rockete::menuSetScreenSizeClicked()
         {
             if (item_selected == item->displayedString)
             {
-                RocketSystem::getInstance().createContext(item->width, item->height);
-                if(getCurrentDocument())
-                {
-                    getCurrentDocument()->rocketDocument = NULL;
-                    reloadCurrentDocument();
-                }
+                setScreenSize(item->width, item->height);
                 break;
             }
         }
     }
+}
 
-    foreach (LocalScreenSizeItem * item, item_list)
+void Rockete::setScreenSize(int width, int height)
+{
+    RocketSystem::getInstance().createContext(width, height);
+    if(getCurrentDocument())
     {
-       delete item;
+        getCurrentDocument()->rocketDocument = NULL;
+        reloadCurrentDocument();
     }
+    Settings::setValue("ScreenSizeWidth", width);
+    Settings::setValue("ScreenSizeHeight", height);
+    ui.renderingView->repaint();
 }
 
 void Rockete::menuLoadFonts()
@@ -2243,20 +2300,6 @@ void Rockete::populateTreeView(const QString &top_item_name, const QString &dire
     item->addChildren(items);
     ui.projectFilesTreeWidget->addTopLevelItem(item);
     item->sortChildren(1,Qt::AscendingOrder);
-}
-
-void Rockete::openPreviewEvent()
-{
-    // get preview index and open correct window
-    const QObject *source = QObject::sender();
-    const int index = source->property("index").toInt();
-}
-
-// open preview window with size w x h
-void Rockete::openPreviewWindow(int w, int h)
-{
-    DocumentPreview *preview = new DocumentPreview();
-    preview->show();
 }
 
 void Rockete::loadPlugins()

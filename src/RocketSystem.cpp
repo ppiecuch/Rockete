@@ -10,10 +10,11 @@
 #include "LocalizationManagerInterface.h"
 #include "ProjectManager.h"
 #include "RocketFileInterface.h"
+#include "Settings.h"
 
 RocketSystem::RocketSystem() :
     renderInterface(),
-    context( 0 ),
+    context( 0 ), context_w( 0 ), context_h( 0 ),
     eventListener( 0 )
 {
     t.start();
@@ -94,8 +95,14 @@ bool RocketSystem::initialize()
 
     Rocket::Controls::Initialise();
 
-    // :TODO: Save last screen size.
-    return createContext(1024, 768);
+    context_w = Settings::getInt("ScreenSizeWidth", 1024);
+    context_h = Settings::getInt("ScreenSizeHeight", 768);
+    if (context_w && context_h)
+        return createContext(context_w, context_h);
+    else {
+        context_w = 1024; context_h = 768;
+        return createContext(1024, 768);
+    }
 }
 
 void RocketSystem::finalize()
