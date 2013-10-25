@@ -641,11 +641,10 @@ void Rockete::newScreenSizeAction()
 void Rockete::orientationChange(QAction *action)
 {
     const int index = action->property("orientation").toInt();
-    switch(index) {
-        /* portrait */ case 0: setScreenSize(RocketSystem::getInstance().context_height(), RocketSystem::getInstance().context_width()); break;
-        /* lasndsca */ case 1: setScreenSize(RocketSystem::getInstance().context_height(), RocketSystem::getInstance().context_width()); break;
-    }
-    // reload document with new orientation
+    const int curr = Settings::getInt("ScreenSizeOrient");
+    // reload document if orientation changed
+    if (index != curr)
+        setScreenSize(RocketSystem::getInstance().context_width(), RocketSystem::getInstance().context_height(), index);
     Settings::setValue("ScreenSizeOrient", index);
 }
 
@@ -686,6 +685,20 @@ void Rockete::menuSetScreenSizeClicked()
 
 void Rockete::setScreenSize(int width, int height)
 {
+    setScreenSize(width, height, Settings::getInt("ScreenSizeOrient"));
+}
+
+void Rockete::setScreenSize(int width, int height, int orientation)
+{
+    if (orientation == 1) { // swap for landscape landscape
+        if (height > width) {
+            int t = width; width = height; height = t;
+        }
+    } else {                // swap for portrait
+        if (width > height) {
+            int t = width; width = height; height = t;
+        }
+    };
     RocketSystem::getInstance().createContext(width, height);
     if(getCurrentDocument())
     {

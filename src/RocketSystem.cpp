@@ -107,7 +107,9 @@ bool RocketSystem::initialize()
 
 void RocketSystem::finalize()
 {
-    //Rocket::Core::FreeType::FontProvider::Shutdown();
+#ifdef ROCKET_FREETYPE
+    Rocket::Core::FreeType::FontProvider::Shutdown();
+#endif
     Rocket::Core::Shutdown();
     Rocket::Core::SetRenderInterface(0);
     Rocket::Core::SetSystemInterface(0);
@@ -126,6 +128,9 @@ bool RocketSystem::createContext(const int width, const int height)
         Rocket::Core::Shutdown();
         return false;
     }
+
+    context_w = width;
+    context_h = height;
 
     eventListener = new EventListener();
 

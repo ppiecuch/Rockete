@@ -164,6 +164,7 @@ private:
     bool updateTextureInfoFiles();  // true - new file(s) has been created
     bool updateTextureInfoFiles(const QString &force);
     void setScreenSize(int width, int height);
+    void setScreenSize(int width, int height, int orientation);
     // open preview window with document size w x h
     void openPreviewWindow(int w, int h);
 
