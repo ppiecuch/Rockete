@@ -34,7 +34,7 @@ ToolTest::ToolTest()
             QImage result = QImage(e->image).scaled(128, 128).scaled(64, 64, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
             QToolButton *b = new QToolButton();
             b->setProperty("index", x);
-            connect(b, SIGNAL(clicked()), Rockete::instance, SLOT(newScreenSizeEvent()));
+            connect(b, SIGNAL(clicked()), Rockete::instance, SLOT(newScreenSizeAction()));
             #if defined Q_OS_MAC || defined Q_WS_MAC
                 b->setAttribute(Qt::WA_MacMiniSize);
             #endif

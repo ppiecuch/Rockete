@@ -176,7 +176,7 @@ private:
     QList<QAction*> recentFileActionList;
     QComboBox *searchBox;
     QComboBox *languageBox;
-    QLabel *labelZoom, *labelPos, *labelCuttingMask;
+    QLabel *labelZoom, *labelPos, *labelCuttingMask, *labelScreenSize;
     QFileSystemWatcher *fileWatcher;
     bool isReloadingFile;
     QMap<int, QString> fileChangedOutsideArray;

@@ -253,7 +253,11 @@ Rockete::Rockete(QWidget *parent, Qt::WindowFlags flags)
     labelPos = new QLabel(parent);
     labelPos->setFrameStyle(QFrame::Panel | QFrame::Sunken);
     labelPos->setText("Cursor: -/-");
+    labelScreenSize = new QLabel(parent);
+    labelScreenSize->setFrameStyle(QFrame::Panel | QFrame::Sunken);
+    labelScreenSize->setText(QString("Screen: %1x%2").arg(RocketSystem::getInstance().context_width()).arg(RocketSystem::getInstance().context_height()));
 
+    ui.statusBar->addPermanentWidget(labelScreenSize);
     ui.statusBar->addPermanentWidget(labelPos);
     ui.statusBar->addPermanentWidget(labelZoom);
 
@@ -634,19 +638,12 @@ void Rockete::newScreenSizeAction()
     setScreenSize(testFrames[index].size.width, testFrames[index].size.height);
 }
 
-// open preview window with size w x h
-void Rockete::openPreviewWindow(int w, int h)
-{
-    DocumentPreview *preview = new DocumentPreview();
-    preview->show();
-}
-
 void Rockete::orientationChange(QAction *action)
 {
     const int index = action->property("orientation").toInt();
     switch(index) {
-        /* portrait */ case 0: setScreenSize(RocketSystem::getInstance().context_height(), RocketSystem::getInstance().context_widtht()); break;
-        /* lasndsca */ case 1: setScreenSize(RocketSystem::getInstance().context_height(), RocketSystem::getInstance().context_widtht()); break;
+        /* portrait */ case 0: setScreenSize(RocketSystem::getInstance().context_height(), RocketSystem::getInstance().context_width()); break;
+        /* lasndsca */ case 1: setScreenSize(RocketSystem::getInstance().context_height(), RocketSystem::getInstance().context_width()); break;
     }
     // reload document with new orientation
     Settings::setValue("ScreenSizeOrient", index);
@@ -697,7 +694,15 @@ void Rockete::setScreenSize(int width, int height)
     }
     Settings::setValue("ScreenSizeWidth", width);
     Settings::setValue("ScreenSizeHeight", height);
+    labelScreenSize->setText(QString("Screen: %1x%2").arg(width).arg(height));
     ui.renderingView->repaint();
+}
+
+// open preview window with size w x h
+void Rockete::openPreviewWindow(int w, int h)
+{
+    DocumentPreview *preview = new DocumentPreview();
+    preview->show();
 }
 
 void Rockete::menuLoadFonts()
