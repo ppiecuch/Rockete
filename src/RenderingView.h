@@ -28,6 +28,8 @@ public slots:
     void zoomIn();
     void zoomOut();
     void zoomReset();
+    void setDebugVisibility(bool visible);
+    void setGridVisibility(bool visible);
 
 protected:
     void initializeGL();
@@ -62,6 +64,8 @@ private:
 
     QDRuler *vertRuler, *horzRuler;
     QLabel *posLabel;
+
+    bool displayGrid;
 };
 
 #endif

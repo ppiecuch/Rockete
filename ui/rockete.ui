@@ -892,6 +892,7 @@ p, li { white-space: pre-wrap; }
     <addaction name="actionZoom_out"/>
     <addaction name="actionZoom_reset"/>
     <addaction name="separator"/>
+    <addaction name="actionDbg_outline"/>
     <addaction name="actionDisplay_grid"/>
     <addaction name="actionGrid_scale"/>
     <addaction name="menuBackground"/>
@@ -961,7 +962,7 @@ p, li { white-space: pre-wrap; }
     <enum>Qt::NoFocus</enum>
    </property>
    <property name="visible">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
    <property name="floating">
     <bool>true</bool>
@@ -1152,6 +1153,10 @@ p, li { white-space: pre-wrap; }
    <property name="checkable">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset resource="../rockete.qrc">
+     <normaloff>:/images/grid.png</normaloff>:/images/grid.png</iconset>
+   </property>
    <property name="text">
     <string>Display grid</string>
    </property>
@@ -1319,6 +1324,24 @@ p, li { white-space: pre-wrap; }
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+R</string>
+   </property>
+  </action>
+  <action name="actionDbg_outline">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../rockete.qrc">
+     <normaloff>:/images/bug.png</normaloff>:/images/bug.png</iconset>
+   </property>
+   <property name="text">
+    <string>Debug outline</string>
+   </property>
+   <property name="toolTip">
+    <string>Toggle debug outline</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+D</string>
    </property>
   </action>
  </widget>
@@ -1965,6 +1988,38 @@ p, li { white-space: pre-wrap; }
     <hint type="destinationlabel">
      <x>658</x>
      <y>405</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionDisplay_grid</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>renderingView</receiver>
+   <slot>setGridVisibility(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>661</x>
+     <y>509</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionDbg_outline</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>renderingView</receiver>
+   <slot>setDebugVisibility(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>661</x>
+     <y>509</y>
     </hint>
    </hints>
   </connection>

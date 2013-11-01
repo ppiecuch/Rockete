@@ -43,5 +43,7 @@
         <file>images/orientation-upsidedown.png</file>
         <file>images/frame-monitor.png</file>
         <file>images/dimensions.png</file>
+        <file>images/bug.png</file>
+        <file>images/view-grid.png</file>
     </qresource>
 </RCC>

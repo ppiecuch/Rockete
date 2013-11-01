@@ -1,7 +1,8 @@
 TEMPLATE = app
 TARGET = Rockete
 DESTDIR = ./debug
-QT += core widgets gui opengl xml testlib
+QT += core gui opengl xml testlib
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 CONFIG += debug_and_release console testlib
 DEFINES += QT_OPENGL_LIB
 RESOURCES = rockete.qrc
@@ -170,7 +171,7 @@ macx {
         LIBS += /opt/local/lib/libz.a
     }
     
-    LIBS += -L$(LIBROCKET)/Build -lRocketCore -lRocketControls
+    LIBS += -L$(LIBROCKET)/Build -lRocketCore -lRocketControls -lRocketDebugger
     
 }
 

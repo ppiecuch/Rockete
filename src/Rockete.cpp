@@ -247,6 +247,10 @@ Rockete::Rockete(QWidget *parent, Qt::WindowFlags flags)
         ++e; ++x;
     }
 
+    ui.mainToolBar->addSeparator();
+    ui.mainToolBar->addAction(ui.actionDbg_outline);
+    ui.mainToolBar->addAction(ui.actionDisplay_grid);
+
     labelZoom = new QLabel(parent);
     labelZoom->setFrameStyle(QFrame::Panel | QFrame::Sunken);
     labelZoom->setText("Zoom: 100%");
@@ -714,6 +718,9 @@ void Rockete::setScreenSize(int width, int height, int orientation)
 // open preview window with size w x h
 void Rockete::openPreviewWindow(int w, int h)
 {
+    Q_UNUSED(w);
+    Q_UNUSED(h);
+
     DocumentPreview *preview = new DocumentPreview();
     preview->show();
 }

@@ -8,6 +8,7 @@
 #include <QLabel>
 #include <QMimeData>
 #include "Rocket/Core/Types.h"
+#include "Rocket/Debugger.h"
 #include "RocketSystem.h"
 #include "GraphicSystem.h"
 #include "RocketHelper.h"
@@ -25,6 +26,7 @@ RenderingView::RenderingView(QWidget *parent) : QGLWidget(parent), vertRuler(NUL
     itMustUpdatePositionOffset = false;
     positionOffset.x=0;
     positionOffset.y=0;
+    displayGrid = true;
 }
 
 void RenderingView::setRulers(QDRuler *horzRuler, QDRuler *vertRuler)
@@ -36,6 +38,18 @@ void RenderingView::setRulers(QDRuler *horzRuler, QDRuler *vertRuler)
 void RenderingView::setPosLabel(QLabel *posLabel)
 {
     this->posLabel = posLabel;
+}
+
+void RenderingView::setDebugVisibility(bool visible)
+{
+    Rocket::Debugger::SetVisible(visible);
+    repaint();
+}
+
+void RenderingView::setGridVisibility(bool visible)
+{
+    displayGrid = visible;
+    repaint();
 }
 
 void RenderingView::keyPressEvent(QKeyEvent* event)
@@ -160,7 +174,8 @@ void RenderingView::paintGL()
     glDisable(GL_TEXTURE_2D);
 
     drawAxisGrid();
-    RenderGrid(RocketSystem::getInstance().getContext()->GetDimensions().x, RocketSystem::getInstance().getContext()->GetDimensions().y, GraphicSystem::scaleFactor, 10, 10, 4, true);
+    if (displayGrid)
+        RenderGrid(RocketSystem::getInstance().getContext()->GetDimensions().x, RocketSystem::getInstance().getContext()->GetDimensions().y, GraphicSystem::scaleFactor, 10, 10, 4, true);
 
     RocketSystem::getInstance().getContext()->Render();
 

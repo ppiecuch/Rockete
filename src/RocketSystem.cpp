@@ -5,6 +5,7 @@
     #include <Rocket/Core/FreeType/FontProvider.h>
 #endif
 #include <Rocket/Controls.h>
+#include <Rocket/Debugger.h>
 #include <QDir>
 #include "ToolManager.h"
 #include "LocalizationManagerInterface.h"
@@ -128,6 +129,8 @@ bool RocketSystem::createContext(const int width, const int height)
         Rocket::Core::Shutdown();
         return false;
     }
+
+    Rocket::Debugger::Initialise(context);
 
     context_w = width;
     context_h = height;
