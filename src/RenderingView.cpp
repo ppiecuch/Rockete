@@ -12,6 +12,7 @@
 #include "RocketSystem.h"
 #include "GraphicSystem.h"
 #include "RocketHelper.h"
+#include "Settings.h"
 #include "ToolManager.h"
 #include "QDRuler.h"
 #include "GLGrid.h"
@@ -43,12 +44,14 @@ void RenderingView::setPosLabel(QLabel *posLabel)
 void RenderingView::setDebugVisibility(bool visible)
 {
     Rocket::Debugger::SetVisible(visible);
+    Settings::setValue("display_debugger", visible);
     repaint();
 }
 
 void RenderingView::setGridVisibility(bool visible)
 {
     displayGrid = visible;
+    Settings::setValue("display_grid", visible);
     repaint();
 }
 

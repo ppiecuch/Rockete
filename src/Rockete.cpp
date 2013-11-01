@@ -249,7 +249,9 @@ Rockete::Rockete(QWidget *parent, Qt::WindowFlags flags)
 
     ui.mainToolBar->addSeparator();
     ui.mainToolBar->addAction(ui.actionDbg_outline);
+    ui.actionDbg_outline->setChecked( Settings::getInt("display_debugger") );
     ui.mainToolBar->addAction(ui.actionDisplay_grid);
+    ui.actionDisplay_grid->setChecked( Settings::getInt("display_grid", true) );
 
     labelZoom = new QLabel(parent);
     labelZoom->setFrameStyle(QFrame::Panel | QFrame::Sunken);
