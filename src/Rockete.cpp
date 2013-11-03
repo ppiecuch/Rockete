@@ -2001,7 +2001,7 @@ bool Rockete::updateTextureInfoFiles(const QString &force)
                     const int &lvalue=inf.left, &rvalue=inf.right, &tvalue=inf.top, &bvalue=inf.bottom;
                     if (tvalue == 0 && bvalue == 0)
                         fprintf(css_file,
-                            "/* cutting: %d|%d|%d|%d */\n"
+                            "/* cutting: l%d|r%d|b%d|t%d */\n"
                             ".%s {\n"
                             "  background1-decorator: tiled-horizontal;\n"
                             "  background1-decorator-id: %s;\n"
@@ -2054,7 +2054,7 @@ bool Rockete::updateTextureInfoFiles(const QString &force)
                         );
                     else if (lvalue == 0 && rvalue == 0)
                         fprintf(css_file,
-                            "/* cutting: %d|%d|%d|%d */\n"
+                            "/* cutting: l%d|r%d|b%d|t%d */\n"
                             ".%s {\n"
                             "  background1-decorator: tiled-vertical;\n"
                             "  background1-decorator-id: %s;\n"
@@ -2107,7 +2107,7 @@ bool Rockete::updateTextureInfoFiles(const QString &force)
                         );
                     else /* tile-box decorator */
                         fprintf(css_file,
-                            "/* cutting: %d|%d|%d|%d */\n"
+                            "/* cutting: l%d|r%d|b%d|t%d */\n"
                             ".%s {\n"
                             "  background1-decorator: tiled-box;\n"
                             "  background1-decorator-id: %s;\n"
@@ -2168,55 +2168,25 @@ bool Rockete::updateTextureInfoFiles(const QString &force)
                             , lvalue, rvalue, bvalue, tvalue
                             , QFileInfo(texture).completeBaseName().toUtf8().constData()
                             , QFileInfo(texture).completeBaseName().toUtf8().constData()
-                            , tinfo.fileName().toUtf8().constData(), l, b+h-tvalue, l+lvalue, b+h
-                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b+h-tvalue, l+w-rvalue, b+h
-                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b+h-tvalue, l+w, b+h
-                            , tinfo.fileName().toUtf8().constData(), l, b+bvalue, l+lvalue, b+h-tvalue
-                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b+bvalue, l+w-rvalue, b+h-tvalue
-                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b+bvalue, l+w, b+h-tvalue
-                            , tinfo.fileName().toUtf8().constData(), l, b, l+lvalue, b+bvalue
-                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b, l+w-rvalue, b+bvalue
-                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b, l+w, b+bvalue
+        #define _decorator_tiled_box() \
+                            , tinfo.fileName().toUtf8().constData(), l, b+h-bvalue, l+lvalue, b+h \
+                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b+h-bvalue, l+w-rvalue, b+h \
+                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b+h-bvalue, l+w, b+h \
+                            , tinfo.fileName().toUtf8().constData(), l, b+tvalue, l+lvalue, b+h-bvalue \
+                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b+tvalue, l+w-rvalue, b+h-bvalue \
+                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b+tvalue, l+w, b+h-bvalue \
+                            , tinfo.fileName().toUtf8().constData(), l, b, l+lvalue, b+tvalue \
+                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b, l+w-rvalue, b+tvalue \
+                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b, l+w, b+tvalue
+                                _decorator_tiled_box()
                             , QFileInfo(texture).completeBaseName().toUtf8().constData()
-                            , tinfo.fileName().toUtf8().constData(), l, b+h-tvalue, l+lvalue, b+h
-                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b+h-tvalue, l+w-rvalue, b+h
-                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b+h-tvalue, l+w, b+h
-                            , tinfo.fileName().toUtf8().constData(), l, b+bvalue, l+lvalue, b+h-tvalue
-                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b+bvalue, l+w-rvalue, b+h-tvalue
-                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b+bvalue, l+w, b+h-tvalue
-                            , tinfo.fileName().toUtf8().constData(), l, b, l+lvalue, b+bvalue
-                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b, l+w-rvalue, b+bvalue
-                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b, l+w, b+bvalue
+                                _decorator_tiled_box()
                             , QFileInfo(texture).completeBaseName().toUtf8().constData()
-                            , tinfo.fileName().toUtf8().constData(), l, b+h-tvalue, l+lvalue, b+h
-                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b+h-tvalue, l+w-rvalue, b+h
-                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b+h-tvalue, l+w, b+h
-                            , tinfo.fileName().toUtf8().constData(), l, b+bvalue, l+lvalue, b+h-tvalue
-                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b+bvalue, l+w-rvalue, b+h-tvalue
-                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b+bvalue, l+w, b+h-tvalue
-                            , tinfo.fileName().toUtf8().constData(), l, b, l+lvalue, b+bvalue
-                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b, l+w-rvalue, b+bvalue
-                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b, l+w, b+bvalue
+                                _decorator_tiled_box()
                             , QFileInfo(texture).completeBaseName().toUtf8().constData()
-                            , tinfo.fileName().toUtf8().constData(), l, b+h-tvalue, l+lvalue, b+h
-                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b+h-tvalue, l+w-rvalue, b+h
-                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b+h-tvalue, l+w, b+h
-                            , tinfo.fileName().toUtf8().constData(), l, b+bvalue, l+lvalue, b+h-tvalue
-                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b+bvalue, l+w-rvalue, b+h-tvalue
-                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b+bvalue, l+w, b+h-tvalue
-                            , tinfo.fileName().toUtf8().constData(), l, b, l+lvalue, b+bvalue
-                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b, l+w-rvalue, b+bvalue
-                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b, l+w, b+bvalue
+                                _decorator_tiled_box()
                             , QFileInfo(texture).completeBaseName().toUtf8().constData()
-                            , tinfo.fileName().toUtf8().constData(), l, b+h-tvalue, l+lvalue, b+h
-                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b+h-tvalue, l+w-rvalue, b+h
-                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b+h-tvalue, l+w, b+h
-                            , tinfo.fileName().toUtf8().constData(), l, b+bvalue, l+lvalue, b+h-tvalue
-                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b+bvalue, l+w-rvalue, b+h-tvalue
-                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b+bvalue, l+w, b+h-tvalue
-                            , tinfo.fileName().toUtf8().constData(), l, b, l+lvalue, b+bvalue
-                            , tinfo.fileName().toUtf8().constData(), l+lvalue, b, l+w-rvalue, b+bvalue
-                            , tinfo.fileName().toUtf8().constData(), l+w-rvalue, b, l+w, b+bvalue
+                                _decorator_tiled_box()
                         );
                 } else fprintf(css_file,
                     ".%s {\n"
