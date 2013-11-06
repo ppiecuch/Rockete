@@ -1,6 +1,7 @@
 #include "RenderingView.h"
 
 #include <QtGui/QMouseEvent>
+#include <QDebug>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QInputDialog>

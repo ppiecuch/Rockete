@@ -65,6 +65,11 @@ void logMessageOutput( QtMsgType type, const QMessageLogContext &context, const 
 {
         Q_UNUSED(context)
 
+        if (amsg.contains("QNSView mouseDragged", Qt::CaseInsensitive)) {
+            // ignore this message
+            return;
+        }
+
         QString msg = amsg;
         if(msg.isEmpty()) return;
         if(msg.length() >= 8195) msg.truncate(8195);
@@ -733,7 +738,7 @@ void Rockete::menuLoadFonts()
         this,
         "Open font files...",
         NULL,
-        "OTF/TTF files (*.otf *.ttf)"
+        "OTF/TTF files (*.otf *.ttf *.fon);Bitmap fonts files (*.bmf *.fnt)"
         );
 
     foreach (const QString & file, files)
@@ -2281,9 +2286,13 @@ void Rockete::populateTreeView(const QString &top_item_name, const QString &dire
             {
                 new_item->setIcon(0, QIcon(":/images/icon_lua.png"));
             }
-            else if(directory_walker.fileInfo().suffix() == "ttf" || directory_walker.fileInfo().suffix() == "otf" || directory_walker.fileInfo().suffix() == "fnt") {
+            else if(directory_walker.fileInfo().suffix() == "ttf" || directory_walker.fileInfo().suffix() == "otf" || directory_walker.fileInfo().suffix() == "fon") {
                 // accept freetype fonts
                 new_item->setIcon(0, QIcon(":/images/icon_fnt.png"));
+            }
+            else if(directory_walker.fileInfo().suffix() == "bmf" || directory_walker.fileInfo().suffix() == "fnt") {
+                // accept bitmap fonts
+                new_item->setIcon(0, QIcon(":/images/icon_bmp_fnt.png"));
             } else
                 known = false;
 

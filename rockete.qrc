@@ -45,5 +45,6 @@
         <file>images/dimensions.png</file>
         <file>images/bug.png</file>
         <file>images/view-grid.png</file>
+        <file>images/icon_bmp_fnt.png</file>
     </qresource>
 </RCC>
