@@ -88,7 +88,7 @@ bool RocketSystem::initialize()
     Rocket::Core::SetFileInterface(new RocketFileInterface());
     Rocket::Core::Initialise();
 
-    #ifdef ROCKET_FREETYPE
+    #if defined ROCKET_FREETYPE || defined ROCKET_WITH_FREETYPE
         Rocket::Core::FreeType::FontProvider::Initialise();
     #else
         Rocket::Core::FontDatabase::Initialise();
@@ -131,6 +131,7 @@ bool RocketSystem::createContext(const int width, const int height)
     }
 
     Rocket::Debugger::Initialise(context);
+    Rocket::Debugger::SetContext(context);
 
     context_w = width;
     context_h = height;
