@@ -143,6 +143,20 @@ bool RocketSystem::createContext(const int width, const int height)
     return true;
 }
 
+void RocketSystem::resizeContext(const int width, const int height)
+{
+	if (context == nullptr)
+	{
+		createContext(width, height);
+		return;
+	}
+
+	context->SetDimensions(Rocket::Core::Vector2i(width, height));
+
+	context_w = width;
+	context_h = height;
+}
+
 void RocketSystem::loadFonts(const QString &directory_path)
 {
     QDir directory(directory_path);

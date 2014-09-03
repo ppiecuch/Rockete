@@ -7,6 +7,7 @@ CONFIG += debug_and_release console testlib
 DEFINES += QT_OPENGL_LIB
 RESOURCES = rockete.qrc
 ICON = ./images/Icon.icns
+QMAKE_CXXFLAGS += -std=c++11
 SOURCES += \
  ./src/Action.cpp \
  ./src/ActionGroup.cpp \

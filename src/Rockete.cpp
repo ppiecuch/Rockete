@@ -718,10 +718,9 @@ void Rockete::setScreenSize(int width, int height, int orientation)
             int t = width; width = height; height = t;
         }
     };
-    RocketSystem::getInstance().createContext(width, height);
+	RocketSystem::getInstance().resizeContext(width, height);
     if(getCurrentDocument())
     {
-        getCurrentDocument()->rocketDocument = NULL;
         reloadCurrentDocument();
     }
     Settings::setValue("ScreenSizeWidth", width);

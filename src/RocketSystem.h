@@ -16,6 +16,7 @@ public:
     bool initialize();
     void finalize();
     bool createContext(const int width, const int height);
+	void resizeContext(const int width, const int height);
     void loadFonts(const QString &directory_path);
     void loadFont(const QString &file);
     Context *getContext() 
