@@ -1,6 +1,7 @@
 TEMPLATE = app
 TARGET = Rockete
-DESTDIR = ./debug
+debug: DESTDIR = $$OUT_PWD/debug
+release: DESTDIR = $$OUT_PWD/release
 QT += core gui opengl xml testlib
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 CONFIG += debug_and_release console testlib
