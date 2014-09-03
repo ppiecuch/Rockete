@@ -130,7 +130,7 @@ bool RocketSystem::createContext(const int width, const int height)
         return false;
     }
 
-    Rocket::Debugger::Initialise(context);
+	Rocket::Debugger::Initialise(context);
     Rocket::Debugger::SetContext(context);
 
     context_w = width;
@@ -141,6 +141,20 @@ bool RocketSystem::createContext(const int width, const int height)
     context->AddEventListener("click", eventListener, true);
 
     return true;
+}
+
+void RocketSystem::resizeContext(const int width, const int height)
+{
+    if (context == nullptr)
+    {
+        createContext(width, height);
+        return;
+    }
+
+    context->SetDimensions(Rocket::Core::Vector2i(width, height));
+
+    context_w = width;
+    context_h = height;
 }
 
 void RocketSystem::loadFonts(const QString &directory_path)
