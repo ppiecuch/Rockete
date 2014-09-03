@@ -718,7 +718,7 @@ void Rockete::setScreenSize(int width, int height, int orientation)
             int t = width; width = height; height = t;
         }
     };
-	RocketSystem::getInstance().resizeContext(width, height);
+    RocketSystem::getInstance().resizeContext(width, height);
     if(getCurrentDocument())
     {
         reloadCurrentDocument();
@@ -1984,7 +1984,7 @@ format3:
 bool Rockete::updateTextureInfoFiles()
 {
     const QString dummy;
-	return updateTextureInfoFiles(dummy);
+    return updateTextureInfoFiles(dummy);
 }
 
 bool Rockete::updateTextureInfoFiles(const QString &force)
