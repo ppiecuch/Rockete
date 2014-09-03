@@ -1985,7 +1985,7 @@ format3:
 bool Rockete::updateTextureInfoFiles()
 {
     const QString dummy;
-    updateTextureInfoFiles(dummy);
+	return updateTextureInfoFiles(dummy);
 }
 
 bool Rockete::updateTextureInfoFiles(const QString &force)

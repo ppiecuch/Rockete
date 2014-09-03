@@ -147,13 +147,18 @@ win32 {
 }
 unix:!macx {
 
-    exists( $(LIBROCKET)/Build/libRocketFreeType.a ) {
-        LIBS +=  -lRocketFreeType -lfreetype 
-        DEFINES += ROCKET_FREETYPE
-    }
-    
-    LIBS += -L$(LIBROCKET)/Build -lRocketCore -lRocketControls -lGLU
-    
+	exists( $(LIBROCKET)/Build/libRocketFreeType.a ) {
+		LIBS +=  -lRocketFreeType -lfreetype
+		DEFINES += ROCKET_FREETYPE
+	}
+
+	debug {
+		LIBS += -L$(LIBROCKET)/Build -lRocketCore_d -lRocketControls_d -lRocketDebugger_d -lGLU
+	}
+
+	release {
+		LIBS += -L$(LIBROCKET)/Build -lRocketCore -lRocketControls -lRocketDebugger -lGLU
+	}
 }
 macx {
 

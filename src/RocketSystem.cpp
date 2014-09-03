@@ -130,7 +130,7 @@ bool RocketSystem::createContext(const int width, const int height)
         return false;
     }
 
-    Rocket::Debugger::Initialise(context);
+	Rocket::Debugger::Initialise(context);
     Rocket::Debugger::SetContext(context);
 
     context_w = width;
