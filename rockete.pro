@@ -7,6 +7,7 @@ CONFIG += debug_and_release console testlib
 DEFINES += QT_OPENGL_LIB
 RESOURCES = rockete.qrc
 ICON = ./images/Icon.icns
+QMAKE_CXXFLAGS += -std=c++11
 SOURCES += \
  ./src/Action.cpp \
  ./src/ActionGroup.cpp \
@@ -148,12 +149,17 @@ win32 {
 unix:!macx {
 
     exists( $(LIBROCKET)/Build/libRocketFreeType.a ) {
-        LIBS +=  -lRocketFreeType -lfreetype 
+        LIBS +=  -lRocketFreeType -lfreetype
         DEFINES += ROCKET_FREETYPE
     }
-    
-    LIBS += -L$(LIBROCKET)/Build -lRocketCore -lRocketControls -lGLU
-    
+
+    debug {
+        LIBS += -L$(LIBROCKET)/Build -lRocketCore_d -lRocketControls_d -lRocketDebugger_d -lGLU
+    }
+
+    release {
+        LIBS += -L$(LIBROCKET)/Build -lRocketCore -lRocketControls -lRocketDebugger -lGLU
+    }
 }
 macx {
 
